@@ -53,11 +53,19 @@ const emptyCache = () => ({
 
 export function useHub() {
   // The hosted preview always opens straight into sample data.
-  const [conn, setConn] = useState(() => load(CONN_KEY, null) || (__PREVIEW__ ? { demo: true } : null));
+  const [conn, setConn] = useState(() => {
+    const c = load(CONN_KEY, null);
+    if (!__PREVIEW__) return c;
+    // A new preview version (or a first visit) opens blank; the toggle at the top fills it with sample data.
+    const cached = load(CACHE_KEY, null);
+    if (!c || !cached || cached.demoVersion !== DEMO_VERSION) return { demo: true, blank: true };
+    return c;
+  });
   const [data, setData] = useState(() => {
     const c = load(CACHE_KEY, null);
     // The hosted preview refreshes its sample data whenever the sample set changes.
     if (c && !(__PREVIEW__ && c.demoVersion !== DEMO_VERSION)) return { ...c, money: c.money || emptyMoney(), meals: c.meals || emptyMeals() };
+    if (__PREVIEW__ && conn?.blank) return { ...emptyCache(), demoVersion: DEMO_VERSION };
     return conn?.demo ? { ...emptyCache(), ...demoData() } : emptyCache();
   });
   const [status, setStatus] = useState({ state: 'idle' });
@@ -500,6 +508,13 @@ export function useHub() {
     setConn(c);
   };
 
+  const startBlank = () => {
+    const c = { demo: true, blank: true };
+    save(CONN_KEY, c);
+    commit(() => ({ ...emptyCache(), demoVersion: DEMO_VERSION }));
+    setConn(c);
+  };
+
   const disconnect = () => {
     save(CONN_KEY, null);
     save(CACHE_KEY, null);
@@ -518,6 +533,6 @@ export function useHub() {
     saveList, deleteList, promoteListItem,
     saveRecipe, deleteRecipe, setMeal, clearMeal, saveGrocery, deleteGrocery, clearTickedGroceries, addWeekToGroceries, addRecipeToGroceries,
     saveExpense, deleteExpense, saveBill, deleteBill, payBill, skipBill, saveCategories, setRate, saveBuy, deleteBuy, toggleBought, logBuy,
-    connect, startDemo, disconnect,
+    connect, startDemo, startBlank, disconnect,
   };
 }

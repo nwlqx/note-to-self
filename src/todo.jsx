@@ -167,8 +167,7 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
             {lineAtEnd && <li className="drop-line" style={{ height: drag.h }} />}
           </ul>
           {more > 0 && <button className="text-btn small quiet" onClick={() => setFocus(q.id)}>{more} more</button>}
-          {(wide || focus === q.id) && <InlineAdd label="Add a task" placeholder="Task" onAdd={(t) => addTo(q.id, t)} />}
-          {!wide && focus !== q.id && list.length === 0 && <p className="quad-empty">Empty</p>}
+          <InlineAdd label="Add a task" placeholder="Task" onAdd={(t) => addTo(q.id, t)} />
         </div>
       </section>
     );

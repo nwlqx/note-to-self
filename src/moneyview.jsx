@@ -196,7 +196,7 @@ export function MoneyPage({ hub, projects, areasById, onSheet, onOpenProject }) 
           ) : (
             <button className="text-btn small m-start" onClick={() => onSheet({ type: 'budgets' })}>Set monthly budgets</button>
           )}
-          <span className="m-sub quiet">{spentLast ? `${money(spentLast)} in ${monthLabel(addMonths(ym, -1)).split(' ')[0]}` : 'Nothing logged the month before'}</span>
+          {spentLast > 0 && <span className="m-sub quiet">{money(spentLast)} in {monthLabel(addMonths(ym, -1)).split(' ')[0]}</span>}
           <button className="primary m-log" onClick={() => onSheet({ type: 'expense', defaults: isThisMonth ? {} : { date: `${ym}-01` } })}>
             <Icon name="plus" size={18} />Log spending
           </button>
@@ -239,6 +239,7 @@ export function MoneyPage({ hub, projects, areasById, onSheet, onOpenProject }) 
         </div>
       </div>
 
+      {(spent > 0 || catTiles.length > 0) && (
       <section className="m-section m-spend" aria-labelledby="m-budgets">
         <h2 className="sr-only" id="m-budgets">{isThisMonth ? "This month's spending" : `${monthLabel(ym).split(' ')[0]}'s spending`}</h2>
         {spent > 0 && (
@@ -286,10 +287,9 @@ export function MoneyPage({ hub, projects, areasById, onSheet, onOpenProject }) 
               </React.Fragment>
             ))}
           </>
-        ) : (
-          <p className="tile-empty">Nothing spent yet this month.</p>
-        )}
+        ) : null}
       </section>
+      )}
 
       <ToBuy hub={hub} projects={projects} onSheet={onSheet} />
     </section>

@@ -327,7 +327,7 @@ export function SettingsView({ hub, activeAreas, theme }) {
         <h2>Connection</h2>
         {hub.conn?.demo ? (
           <p className="hint">{typeof __PREVIEW__ !== 'undefined' && __PREVIEW__
-            ? "This is a preview with sample data. Your changes stay in this browser on this device and aren't saved to GitHub."
+            ? "This is a preview. Your changes stay in this browser on this device and aren't saved to GitHub."
             : "You're looking at sample data. Nothing is saved to GitHub."}</p>
         ) : (
           <p className="hint">Saving to {hub.conn?.owner}/{hub.conn?.repo}.</p>

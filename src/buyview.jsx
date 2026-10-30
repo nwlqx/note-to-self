@@ -101,8 +101,8 @@ export function ToBuy({ hub, projects, onSheet }) {
             {lineAtEnd && <li className="drop-line" style={{ height: drag.h }} />}
           </ul>
           {more > 0 && <button className="text-btn small quiet" onClick={() => setExpanded((s) => new Set(s).add(q.id))}>{more} more</button>}
-                    <div className="buy-foot">
-            <InlineAdd label="Add an item" placeholder="Item" onAdd={(t) => add(q.id, t)} />
+          <InlineAdd label="Add an item" placeholder="Item" onAdd={(t) => add(q.id, t)} />
+          <div className="buy-foot">
             {count > 0 && (
               <span className="buy-total">{count} item{count === 1 ? '' : 's'}{total > 0 ? <>, <strong>{money(total, BASE, { compact: total >= 100 || Number.isInteger(total) })}</strong></> : ''}</span>
             )}

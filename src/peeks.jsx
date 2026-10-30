@@ -48,8 +48,9 @@ function Row({ style, icon, name, meta, end, onClick, current }) {
   );
 }
 
-function Foot({ label, onClick }) {
-  return <button className="peek-all" onClick={onClick}>{label}<Icon name="arrow" size={14} /></button>;
+// The tab itself opens the page, so the quick view only notes what didn't fit.
+function More({ n }) {
+  return n > 0 ? <p className="peek-note">{n} more</p> : null;
 }
 
 const entryIcon = (e, projectsById) => {
@@ -89,7 +90,7 @@ export function TodoPeek({ items, entries, projects, areasById, onOpenCard, onOp
             ))}
           </ul>
         ) : <p className="peek-empty">Nothing due today. Nice.</p>}
-        <Foot label={rows.length > 6 ? `Open To-do, ${rows.length - 6} more` : 'Open To-do'} onClick={() => { close(); onAll(); }} />
+        <More n={rows.length - 6} />
       </>
     )}>{children}</HoverPeek>
   );
@@ -113,7 +114,7 @@ export function CalendarPeek({ entries, projects, areasById, onOpenEntry, onAll,
             ))}
           </ul>
         ) : <p className="peek-empty">Nothing on today</p>}
-        <Foot label={events.length > 6 ? `Open Calendar, ${events.length - 6} more` : 'Open Calendar'} onClick={() => { close(); onAll(); }} />
+        <More n={events.length - 6} />
       </>
     )}>{children}</HoverPeek>
   );
@@ -141,7 +142,6 @@ export function MealsPeek({ meals, onOpenMeal, onAll, children }) {
           })}
         </ul>
         {toBuy > 0 && <p className="peek-note">{toBuy} thing{toBuy === 1 ? '' : 's'} on the grocery list</p>}
-        <Foot label="Open Meals" onClick={() => { close(); onAll(); }} />
       </>
     )}>{children}</HoverPeek>
   );
@@ -180,7 +180,6 @@ export function MoneyPeek({ money: m, onOpenBill, onAll, children }) {
             </ul>
           </>
         )}
-        <Foot label="Open Budgeting" onClick={() => { close(); onAll(); }} />
       </>
     )}>{children}</HoverPeek>
   );

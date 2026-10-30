@@ -35,7 +35,7 @@ const HOUR_PX = 64;
 const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 const fmtMin = (m) => time12(`${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`);
 
-function DayView({ entries, areasById, onToggle, onOpen, head, day, setDay }) {
+function DayView({ entries, areasById, onToggle, onOpen, onNewAt, draft, head, day, setDay }) {
   const today = todayKey();
   const weekStart = startOfWeek(day);
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -49,7 +49,8 @@ function DayView({ entries, areasById, onToggle, onOpen, head, day, setDay }) {
     if (e.time && !e.endDate) {
       const start = toMin(e.time);
       let end = start + 60;
-      if (e.ev && !e.ev.allDay) {
+      if (e.endTime) end = toMin(e.endTime);
+      else if (e.ev && !e.ev.allDay) {
         const en = new Date(e.ev.end);
         end = dateKey(en) === day ? en.getHours() * 60 + en.getMinutes() : 24 * 60;
       }
@@ -76,6 +77,20 @@ function DayView({ entries, areasById, onToggle, onOpen, head, day, setDay }) {
 
   const label = longDate(day);
 
+  // Tap an empty spot on the timeline: a one-hour event starting at that half hour.
+  const showDraft = draft && draft.date === day && draft.time && !entries.some((e) => e.key === 'i:' + draft.id);
+  const draftStart = showDraft ? toMin(draft.time) : 0;
+  const draftEnd = showDraft ? (draft.endTime ? toMin(draft.endTime) : draftStart + 60) : 0;
+  const pickTime = (ev) => {
+    if (!onNewAt || ev.target.closest('.slot')) return;
+    const top = ev.currentTarget.getBoundingClientRect().top;
+    const min = firstHour * 60 + ((ev.clientY - top) / HOUR_PX) * 60;
+    const start = Math.max(0, Math.min(23 * 60 + 30, Math.floor(min / 30) * 30));
+    const end = Math.min(start + 60, 23 * 60 + 59);
+    const t = (n) => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+    onNewAt(day, t(start), t(end));
+  };
+
   return (
     <section className="view day-view" aria-label="Day">
       {head}
@@ -91,8 +106,12 @@ function DayView({ entries, areasById, onToggle, onOpen, head, day, setDay }) {
       <div className="day-strip" role="radiogroup" aria-label="Day">
         {days.map((d) => (
           <button key={d} role="radio" aria-checked={d === day} className="day-pick" data-today={d === today || undefined}
+            data-weekend={[0, 6].includes(parseKey(d).getDay()) || undefined}
             onClick={() => setDay(d)} aria-label={`${longDate(d)}, ${counts[d]} items`}>
-            <span className="day-pick-dow">{parseKey(d).toLocaleDateString('en-SG', { weekday: 'narrow' })}</span>
+            <span className="day-pick-dow">
+              <span className="dp-long">{d === today ? 'Today' : parseKey(d).toLocaleDateString('en-SG', { weekday: 'short' })}</span>
+              <span className="dp-short" aria-hidden="true">{parseKey(d).toLocaleDateString('en-SG', { weekday: 'narrow' })}</span>
+            </span>
             <span className="day-pick-num">{parseKey(d).getDate()}</span>
             <span className="day-pick-dots" aria-hidden="true">{counts[d] ? '•'.repeat(Math.min(3, counts[d])) : ''}</span>
           </button>
@@ -117,7 +136,8 @@ function DayView({ entries, areasById, onToggle, onOpen, head, day, setDay }) {
         </ul>
       )}
 
-      <div className="schedule" style={{ height: hours.length * HOUR_PX }}>
+      <div className="schedule" style={{ height: hours.length * HOUR_PX }} onClick={pickTime}
+        title={onNewAt ? 'Click to add an event' : undefined}>
         {hours.map((h) => (
           <div key={h} className="hour-row" style={{ top: y(h * 60) }}>
             <span className="hour-label">{time12(`${String(h % 24).padStart(2, '0')}:00`)}</span>
@@ -138,6 +158,13 @@ function DayView({ entries, areasById, onToggle, onOpen, head, day, setDay }) {
               </button>
             );
           })}
+          {showDraft && (
+            <div className="slot slot-draft" aria-hidden="true" data-short={draftEnd - draftStart < 50 || undefined}
+              style={{ top: y(draftStart) + 2, height: Math.max(30, y(draftEnd) - y(draftStart) - 4), left: 2, width: 'calc(100% - 4px)' }}>
+              <span className="slot-time">{fmtMin(draftStart)}–{fmtMin(draftEnd)}</span>
+              <span className="slot-title">New event</span>
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -287,7 +314,7 @@ export function DueStrip({ entries, areasById, projects = [], onOpen, onToggle }
 
   return (
     <section className="due-strip-wrap" aria-labelledby="due-head">
-      <h2 id="due-head" className="sr-only">Due in the next two weeks{count ? `, ${count}` : ''}</h2>
+      <h2 id="due-head" className="strip-label">Next 2 weeks<span className="sr-only">{count ? `, ${count}` : ''}</span></h2>
       <div className="due-strip" role="list">
         {overdue.length > 0 && (
           <div className="strip-day strip-overdue" role="listitem">

@@ -5,15 +5,25 @@ import { Sheet, Icon, areaColor, findLinks, linkLabel, rangeLabel, longDate, tim
 import { formatSize } from './files.js';
 import { QuadPicker } from './todo.jsx';
 
-const FIELDS = ['id', 'title', 'kind', 'projectId', 'section', 'area', 'date', 'endDate', 'time', 'notes', 'checklist', 'order', 'quadrant', 'qOrder'];
+const FIELDS = ['id', 'title', 'kind', 'projectId', 'section', 'area', 'date', 'endDate', 'time', 'endTime', 'notes', 'checklist', 'order', 'quadrant', 'qOrder'];
 const pick = (o) => Object.fromEntries(FIELDS.map((k) => [k, o[k]]));
+
+// Moving an event's start keeps its length, the way Google Calendar does.
+const hm = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+const mh = (n) => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+function moveStart(f, time) {
+  if (!time) return { time: '', endTime: '' };
+  if (!f.time || !f.endTime) return { time };
+  const end = hm(time) + (hm(f.endTime) - hm(f.time));
+  return { time, endTime: end < 24 * 60 ? mh(end) : '' };
+}
 
 export function CardSheet({ hub, cardId, defaults, areas, projects, onClose }) {
   const stored = cardId ? hub.data.items.items.find((x) => x.id === cardId) : null;
   const [f, setF] = useState(() => ({
     id: cardId || 'c-' + uid(),
     title: '', kind: 'task', projectId: '', section: '', area: areas[0]?.id || '',
-    date: '', endDate: '', time: '', notes: '', checklist: [],
+    date: '', endDate: '', time: '', endTime: '', notes: '', checklist: [],
     ...(stored ? pick(stored) : defaults),
   }));
   if (f.kind === 'trip') f.kind = 'event';
@@ -113,7 +123,7 @@ export function CardSheet({ hub, cardId, defaults, areas, projects, onClose }) {
         )}
       </div>
 
-      <textarea ref={titleRef} data-autofocus className="title-input" rows="1" value={f.title} placeholder="Card title" aria-label="Card title"
+      <textarea ref={titleRef} data-autofocus className="title-input" rows="1" value={f.title} placeholder="Title" aria-label="Title"
         onChange={(e) => set({ title: e.target.value.replace(/\n/g, ' ') })}
         onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()} />
 
@@ -149,7 +159,7 @@ export function CardSheet({ hub, cardId, defaults, areas, projects, onClose }) {
 
       <div className="seg" role="radiogroup" aria-label="Type">
         {KINDS.map((k) => (
-          <button type="button" key={k.id} role="radio" aria-checked={(f.kind === 'event' ? 'event' : 'task') === k.id} onClick={() => set(k.id === 'event' ? { kind: 'event' } : { kind: f.date ? 'deadline' : 'task', endDate: '', time: '' }, { now: true })}>
+          <button type="button" key={k.id} role="radio" aria-checked={(f.kind === 'event' ? 'event' : 'task') === k.id} onClick={() => set(k.id === 'event' ? { kind: 'event' } : { kind: f.date ? 'deadline' : 'task', endDate: '', time: '', endTime: '' }, { now: true })}>
             <span className="seg-mark" aria-hidden="true">{k.mark}</span>{k.label}
           </button>
         ))}
@@ -161,12 +171,20 @@ export function CardSheet({ hub, cardId, defaults, areas, projects, onClose }) {
         </label>
         {f.kind === 'event' && (
           <label>Until (optional)<input type="date" value={f.endDate || ''} min={f.date || undefined}
-            onChange={(e) => set({ endDate: e.target.value, ...(e.target.value && e.target.value > f.date ? { time: '' } : {}) }, { now: true })} /></label>
-        )}
-        {f.kind === 'event' && !(f.endDate && f.endDate > f.date) && (
-          <label>Time<input type="time" value={f.time || ''} onChange={(e) => set({ time: e.target.value }, { now: true })} /></label>
+            onChange={(e) => set({ endDate: e.target.value, ...(e.target.value && e.target.value > f.date ? { time: '', endTime: '' } : {}) }, { now: true })} /></label>
         )}
       </div>
+      {f.kind === 'event' && !(f.endDate && f.endDate > f.date) && (
+        <div className="field-grid field-grid-two">
+          <>
+            <label>{f.time ? 'Starts' : 'Time (optional)'}<input type="time" value={f.time || ''} onChange={(e) => set(moveStart(f, e.target.value), { now: true })} /></label>
+            {f.time && (
+              <label>Ends<input type="time" value={f.endTime || ''} min={f.time} onChange={(e) => set({ endTime: e.target.value && e.target.value > f.time ? e.target.value : '' }, { now: true })} /></label>
+            )}
+          </>
+        </div>
+      )}
+
 
       {(f.kind === 'task' || f.kind === 'deadline') && (
         <div className="card-part" role="group" aria-labelledby="prio-head">
@@ -204,7 +222,7 @@ export function CardSheet({ hub, cardId, defaults, areas, projects, onClose }) {
       <section className="card-part">
         <label>Notes and links
           <textarea rows="4" value={f.notes || ''} onChange={(e) => set({ notes: e.target.value })}
-            placeholder="Paste a Jira or Confluence link, or write anything" />
+            placeholder="Paste a link or write anything" />
         </label>
         {links.length > 0 && (
           <ul className="links">

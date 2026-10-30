@@ -201,7 +201,7 @@ export function InlineAdd({ onAdd, label = 'Add card', placeholder = 'Card title
           if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); setText(''); }
         }}
         onBlur={() => { submit(); setOpen(false); }} />
-      <p className="hint">Enter to add another, Esc to stop</p>
+      <p className="hint key-hint">Enter to add another, Esc when done</p>
     </div>
   );
 }

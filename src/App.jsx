@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useHub } from './store.js';
-import { buildEntries, todayKey, startOfWeek, firstOpenSection, projectProgress } from './model.js';
+import { buildEntries, todayKey, startOfWeek, firstOpenSection, projectProgress, uid } from './model.js';
 import { Icon, useTheme, projectStyle, ProjectIcon } from './ui.jsx';
 import { Connect, Setup, SettingsView } from './views.jsx';
 import { CalendarPage } from './calendar.jsx';
@@ -41,6 +41,19 @@ const TABS = [
   { id: 'money', label: 'Budgeting', icon: 'wallet' },
   { id: 'meals', label: 'Meals', icon: 'utensils' },
 ];
+
+// Preview only: flip between a brand-new, empty app and one full of sample data.
+function PreviewToggle({ hub, onSwitch }) {
+  if (!(typeof __PREVIEW__ !== 'undefined' && __PREVIEW__)) return null;
+  const blank = !!hub.conn?.blank;
+  const pick = (toBlank) => { if (toBlank === blank) return; onSwitch(); toBlank ? hub.startBlank() : hub.startDemo(); window.scrollTo(0, 0); };
+  return (
+    <div className="preview-toggle seg seg-small" role="radiogroup" aria-label="Preview data">
+      <button role="radio" aria-checked={blank} onClick={() => pick(true)}>Empty</button>
+      <button role="radio" aria-checked={!blank} onClick={() => pick(false)}>Filled</button>
+    </div>
+  );
+}
 
 export default function App() {
   const hub = useHub();
@@ -128,8 +141,11 @@ export default function App() {
   }
   if (setupActive || (!activeAreas.length && !setupDone)) {
     return (
-      <Setup hub={hub} activeAreas={activeAreas} keepOpen={() => setSetupActive(true)}
-        onDone={() => { setSetupActive(false); setSetupDone(true); }} />
+      <>
+        <PreviewToggle hub={hub} onSwitch={() => { setSetupActive(false); setSetupDone(false); }} />
+        <Setup hub={hub} activeAreas={activeAreas} keepOpen={() => setSetupActive(true)}
+          onDone={() => { setSetupActive(false); setSetupDone(true); }} />
+      </>
     );
   }
 
@@ -148,6 +164,7 @@ export default function App() {
 
   return (
     <div className="shell">
+      <PreviewToggle hub={hub} onSwitch={() => { setSetupActive(false); setSetupDone(false); setSheet(null); setView({ name: 'todo' }); }} />
       <nav className="rail" aria-label="Views">
         <ul className="dock">
           {TABS.map((t) => {
@@ -236,7 +253,9 @@ export default function App() {
         )}
         {view.name === 'calendar' && (
           <CalendarPage {...props} weekStart={weekStart} setWeekStart={setWeekStart} month={month} setMonth={setMonth}
-            day={day} setDay={setDay} mode={calMode} setMode={setCalMode} />
+            day={day} setDay={setDay} mode={calMode} setMode={setCalMode}
+            onNewAt={(date, time, endTime) => setSheet({ type: 'card', defaults: { id: 'c-' + uid(), kind: 'event', date, time, endTime } })}
+            draft={sheet?.type === 'card' && !sheet.cardId && sheet.defaults?.time ? sheet.defaults : null} />
         )}
         {view.name === 'meals' && <MealsPage hub={hub} onSheet={setSheet} />}
         {view.name === 'money' && (
@@ -322,9 +341,7 @@ function ProjectsPeek({ projects, items, settings, areasById, currentId, onOpen,
               ))}
             </ul>
           ) : <p className="peek-empty">No projects yet</p>}
-          <button className="peek-all" onClick={() => { setOpen(false); onAll(); }}>
-            {rows.length > 7 ? `All ${rows.length} projects` : 'All projects'}<Icon name="arrow" size={14} />
-          </button>
+          {rows.length > 7 && <p className="peek-note">{rows.length - 7} more</p>}
         </div>
       )}
     </div>

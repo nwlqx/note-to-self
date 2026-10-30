@@ -208,6 +208,7 @@ export function buildEntries(items, events, settings) {
       date: it.date || '',
       endDate: isEventKind(it.kind) && it.endDate && it.endDate > it.date ? it.endDate : '',
       time: it.kind === 'event' ? it.time || '' : '',
+      endTime: it.kind === 'event' && it.time && it.endTime > it.time ? it.endTime : '',
       done: !!it.done,
       notes: it.notes || '',
       item: it,

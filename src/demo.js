@@ -1,7 +1,7 @@
 // Sample data for trying the app without connecting GitHub.
 import { addDays, todayKey, startOfWeek, nowIso } from './model.js';
 
-export const DEMO_VERSION = 16;
+export const DEMO_VERSION = 17;
 
 export function demoData() {
   const t = todayKey();

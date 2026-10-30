@@ -182,25 +182,41 @@ function SpendPill({ hub, project, onOpen }) {
   );
 }
 
-export function InlineAdd({ onAdd, label = 'Add card', placeholder = 'Card title' }) {
+// `extra` adds an optional second box: 'price' passes a number to onAdd ('' when left empty),
+// 'date' passes a YYYY-MM-DD due date ('' when left empty).
+export function InlineAdd({ onAdd, label = 'Add card', placeholder = 'Card title', extra = '' }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
+  const [second, setSecond] = useState('');
+  const nameRef = useRef(null);
   const submit = () => {
-    if (text.trim()) onAdd(text.trim());
+    if (text.trim()) onAdd(text.trim(), extra === 'price' && second !== '' ? Number(second) || 0 : second);
     setText('');
+    setSecond('');
+  };
+  const close = () => { setOpen(false); setText(''); setSecond(''); };
+  const onKeyDown = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); submit(); nameRef.current?.focus(); }
+    if (e.key === 'Escape') { e.stopPropagation(); close(); }
   };
   if (!open) {
     return <button className="inline-add" onClick={() => setOpen(true)}><Icon name="plus" size={16} />{label}</button>;
   }
   return (
-    <div className="inline-add-form">
-      <input autoFocus value={text} placeholder={placeholder} aria-label={placeholder}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') { e.preventDefault(); submit(); }
-          if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); setText(''); }
-        }}
-        onBlur={() => { submit(); setOpen(false); }} />
+    // Moving between the two boxes isn't leaving the form, so only submit when focus goes elsewhere.
+    <div className="inline-add-form" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) { submit(); setOpen(false); } }}>
+      <div className={extra ? 'inline-add-row' : undefined}>
+        <input ref={nameRef} autoFocus value={text} placeholder={placeholder} aria-label={placeholder}
+          onChange={(e) => setText(e.target.value)} onKeyDown={onKeyDown} />
+        {extra === 'price' && (
+          <input className="inline-add-price" type="text" inputMode="decimal" value={second} placeholder="Price" aria-label="Rough price (optional)"
+            onChange={(e) => setSecond(e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, ''))} onKeyDown={onKeyDown} />
+        )}
+        {extra === 'date' && (
+          <input className="inline-add-date" type="date" value={second} aria-label="Due date (optional)"
+            data-empty={second ? undefined : ''} onChange={(e) => setSecond(e.target.value)} onKeyDown={onKeyDown} />
+        )}
+      </div>
       <p className="hint key-hint">Enter to add another, Esc when done</p>
     </div>
   );

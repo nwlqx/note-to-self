@@ -87,10 +87,10 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
     return n;
   });
 
-  const addTo = (quadrant, title) => {
+  const addTo = (quadrant, title, date = '') => {
     const onlyArea = areas.filter((a) => !hidden.has(a.id));
     hub.saveCard({
-      id: 'c-' + uid(), title, kind: 'task', projectId: projectsById[proj] ? proj : '', area: onlyArea.length === 1 ? onlyArea[0].id : '',
+      id: 'c-' + uid(), title, kind: date ? 'deadline' : 'task', ...(date ? { date } : {}), projectId: projectsById[proj] ? proj : '', area: onlyArea.length === 1 ? onlyArea[0].id : '',
       quadrant, qOrder: (zonesRef.current[quadrant] || []).reduce((m, c) => Math.max(m, c.qOrder ?? 0), 0) + 1000,
     });
   };
@@ -167,7 +167,7 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
             {lineAtEnd && <li className="drop-line" style={{ height: drag.h }} />}
           </ul>
           {more > 0 && <button className="text-btn small quiet" onClick={() => setFocus(q.id)}>{more} more</button>}
-          <InlineAdd label="Add a task" placeholder="Task" onAdd={(t) => addTo(q.id, t)} />
+          <InlineAdd label="Add a task" placeholder="Task" extra="date" onAdd={(t, d) => addTo(q.id, t, d)} />
         </div>
       </section>
     );
@@ -215,7 +215,7 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
           {!showAllTray && trayRows.rows.length > 8 && (
             <button className="text-btn small quiet" onClick={() => setShowAllTray(true)}>Show all {trayRows.rows.length}</button>
           )}
-          <InlineAdd label="Add a task" placeholder="Task" onAdd={(t) => addTo('', t)} />
+          <InlineAdd label="Add a task" placeholder="Task" extra="date" onAdd={(t, d) => addTo('', t, d)} />
         </section>
       </div>
       <DragGhost drag={drag} />

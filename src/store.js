@@ -493,7 +493,8 @@ export function useHub() {
 
   const connect = async (c) => {
     const test = createClient(c);
-    await test.readRaw('calendars.json'); // throws on bad token or repo
+    // A wrong owner or repo name comes back as a missing file, not an error.
+    if ((await test.readRaw('calendars.json')) === null) throw new Error('Repository not found');
     save(CACHE_KEY, null);
     commit(() => emptyCache());
     save(CONN_KEY, c);

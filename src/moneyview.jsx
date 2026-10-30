@@ -258,7 +258,7 @@ export function MoneyPage({ hub, projects, areasById, onSheet, onOpenProject }) 
                         {trips.map(({ p, spent: s }) => (
                           <li key={p.id} style={projectStyle(p, areasById[p.area])}>
                             <button className="m-tile" onClick={() => onSheet({ type: 'spending', projectId: p.id })}>
-                              <span className="m-tile-name"><ProjectIcon project={p} size={15} />{p.name}</span>
+                              <span className="m-tile-name" title={p.name}><ProjectIcon project={p} size={15} /><span className="m-tile-text">{p.name}</span></span>
                               <span className="m-tile-num">{money(s, BASE, { compact: true })}{p.budget ? <span className="m-of"> / {money(p.budget, BASE, { compact: true })}</span> : null}</span>
                               {p.budget ? <Bar spent={s} budget={p.budget} label="" /> : null}
                               <span className={`m-tile-left${p.budget && s > p.budget ? ' m-over' : ''}`}>{p.budget ? (s > p.budget ? `${money(s - p.budget, BASE, { compact: true })} over` : `${money(p.budget - s, BASE, { compact: true })} left`) : 'All time'}</span>
@@ -275,8 +275,8 @@ export function MoneyPage({ hub, projects, areasById, onSheet, onOpenProject }) 
                   return (
                     <li key={c.id || 'none'} style={areaStyle(c.color ? { color: c.color } : null)}>
                       <button className="m-tile" onClick={() => onSheet({ type: 'category', catId: c.id || 'none', ym })} aria-label={`${c.name}, ${money(s)} spent${c.budget ? ` of ${money(c.budget)}` : ''}. Show details`}>
-                        <span className="m-tile-name"><CatMark c={c} />{c.name}</span>
-                        <span className="m-tile-num">{money(s, BASE, { compact: s >= 100 })}{c.budget ? <span className="m-of"> / {money(c.budget, BASE, { compact: true })}</span> : null}</span>
+                        <span className="m-tile-name" title={c.name}><CatMark c={c} /><span className="m-tile-text">{c.name}</span></span>
+                        <span className="m-tile-num">{money(s, BASE, { compact: true })}{c.budget ? <span className="m-of"> / {money(c.budget, BASE, { compact: true })}</span> : null}</span>
                         {c.budget ? <Bar spent={s} budget={c.budget} label="" /> : null}
                         {c.budget ? <span className={`m-tile-left${over ? ' m-over' : ''}`}>{over ? `${money(s - c.budget, BASE, { compact: true })} over` : `${money(c.budget - s, BASE, { compact: true })} left`}</span> : null}
                       </button>

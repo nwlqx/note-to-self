@@ -315,13 +315,28 @@ export function DueStrip({ entries, areasById, projects = [], onOpen, onToggle }
   return (
     <section className="due-strip-wrap" aria-labelledby="due-head">
       <h2 id="due-head" className="strip-label">Next 2 weeks<span className="sr-only">{count ? `, ${count}` : ''}</span></h2>
+      {overdue.length > 0 && (
+        <div className="strip-day strip-overdue">
+          <div className="strip-head"><span className="strip-dow">Overdue</span></div>
+          <ul className="overdue-list" aria-label="Overdue">
+            {overdue.map((e) => (
+              <li key={e.key} className="overdue-row">
+                <button className="check overdue-check" aria-pressed="false" aria-label={`Mark "${e.title}" done`} onClick={() => onToggle?.(e.item.id)} />
+                <button className="overdue-body" onClick={() => onOpen(e)}>
+                  <span className="overdue-title">
+                    {projectsById[e.projectId]?.icon && (
+                      <span className="todo-proj-icon" title={e.project}><ProjectIcon project={projectsById[e.projectId]} size={14} /><span className="sr-only">{e.project}: </span></span>
+                    )}
+                    {e.title}
+                  </span>
+                  <span className="overdue-date">Due {shortDate(e.date)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="due-strip" role="list">
-        {overdue.length > 0 && (
-          <div className="strip-day strip-overdue" role="listitem">
-            <div className="strip-head"><span className="strip-dow">Overdue</span></div>
-            <ul>{overdue.map(item)}</ul>
-          </div>
-        )}
         {days.map((d, i) => {
           const dow = parseKey(d).getDay();
           return (

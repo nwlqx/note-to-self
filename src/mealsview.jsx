@@ -56,8 +56,7 @@ export function MealsPage({ hub, onSheet }) {
         <h2 className="sr-only">{weekStart === startOfWeek(today) ? 'This week' : rangeLabel(weekStart, addDays(weekStart, 6))}</h2>
         <div className="ml-summary">
           <span><strong>{plannedCount}</strong> of {days.length * SLOTS.filter((s) => !s.extra).length} meals planned {weekStart === startOfWeek(today) ? 'this week' : `for ${rangeLabel(weekStart, addDays(weekStart, 6))}`}</span>
-          {!foodBudget && <span><strong>{money(planned)}</strong> planned this week</span>}
-          {!foodBudget && <span>No Food budget set in Budgeting</span>}
+          {!foodBudget && planned > 0 && <span><strong>{money(planned)}</strong> planned this week</span>}
         </div>
         <div className="m-month-nav">
           {weekStart !== startOfWeek(today) && <button className="text-btn small" onClick={() => setWeekStart(startOfWeek(today))}>This week</button>}

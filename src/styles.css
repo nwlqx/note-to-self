@@ -2286,3 +2286,16 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
   background-image: linear-gradient(to bottom, transparent 55%, var(--pink) 55%, var(--pink) 90%, transparent 90%);
   padding-inline: 0.1em; margin-inline-start: -0.1em;
 }
+.tray-empty { margin: 0; color: var(--ink-faint); font-size: var(--t-small); }
+.cal-sub h2, .day-title, .month-title { background-image: none; padding-inline: 0; margin-inline-start: 0; }
+.m-month-name { background-image: none; padding-inline: 0; margin-inline-start: 0; }
+.meals .m-h2 { background-image: none; padding-inline: 0; margin-inline-start: 0; }
+/* Meals: today's date gets a highlighter stroke instead of a circle */
+.ml-day[data-today] .ml-dnum {
+  width: auto; height: auto; display: inline; border-radius: 0; font-size: 1.75rem; color: var(--ink);
+  --hl-c: color-mix(in srgb, var(--peach) var(--hl-mix, 100%), transparent);
+  background: linear-gradient(to bottom, transparent 52%, var(--hl-c) 52%, var(--hl-c) 92%, transparent 92%);
+  padding-inline: 0.12em; margin-inline-end: -0.12em;
+}
+.todo-head { justify-content: flex-end; align-items: center; }
+.todo-head { margin-top: calc(var(--gap-section) - 16px); margin-bottom: 8px; }

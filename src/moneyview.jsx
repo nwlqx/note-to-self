@@ -239,8 +239,6 @@ export function MoneyPage({ hub, projects, areasById, onSheet, onOpenProject }) 
         </div>
       </div>
 
-      <ToBuy hub={hub} projects={projects} onSheet={onSheet} />
-
       <section className="m-section m-spend" aria-labelledby="m-budgets">
         <div className="m-section-head">
           <h2 className="m-h2" id="m-budgets">{isThisMonth ? "This month's spending" : `${monthLabel(ym).split(' ')[0]}'s spending`}</h2>
@@ -295,6 +293,8 @@ export function MoneyPage({ hub, projects, areasById, onSheet, onOpenProject }) 
           </ul>
         </section>
       )}
+
+      <ToBuy hub={hub} projects={projects} onSheet={onSheet} />
     </section>
   );
 }

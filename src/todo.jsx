@@ -184,7 +184,7 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
         onOpenDay={onOpenDay} onOpenWeek={onOpenWeek} onOpenProject={onOpenProject} />
 
       <header className="todo-head">
-        <h2>To-do</h2>
+        <h2 className="sr-only">To-do</h2>
         <ProjectFilter projects={projects.filter((p) => !p.archived)} value={proj} onChange={setProj} />
       </header>
 
@@ -207,7 +207,7 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
         <section className="tray" data-drop="tray" aria-labelledby="tray-head">
           <header className="tray-head">
             <h2 id="tray-head"><span className="hl-text">To sort</span> <span className="count">{zones.tray.length}</span></h2>
-            {!zones.tray.length && <p className="sticker">all sorted, nice work</p>}
+            {!zones.tray.length && <p className="tray-empty">Empty</p>}
           </header>
           <ul className="todo-list">
             {trayShown.map((r) => renderRow(r, 'tray'))}

@@ -101,9 +101,8 @@ export function ToBuy({ hub, projects, onSheet }) {
             {lineAtEnd && <li className="drop-line" style={{ height: drag.h }} />}
           </ul>
           {more > 0 && <button className="text-btn small quiet" onClick={() => setExpanded((s) => new Set(s).add(q.id))}>{more} more</button>}
-          {!wide && list.length === 0 && <p className="quad-empty">Empty</p>}
-          <div className="buy-foot">
-            {wide && <InlineAdd label="Add an item" placeholder="Item" onAdd={(t) => add(q.id, t)} />}
+                    <div className="buy-foot">
+            <InlineAdd label="Add an item" placeholder="Item" onAdd={(t) => add(q.id, t)} />
             {count > 0 && (
               <span className="buy-total">{count} item{count === 1 ? '' : 's'}{total > 0 ? <>, <strong>{money(total, BASE, { compact: total >= 100 || Number.isInteger(total) })}</strong></> : ''}</span>
             )}
@@ -115,10 +114,7 @@ export function ToBuy({ hub, projects, onSheet }) {
 
   return (
     <section className="m-section to-buy" aria-labelledby="m-tobuy">
-      <div className="m-section-head">
-        <h2 className="m-h2" id="m-tobuy">To buy</h2>
-        <button className="text-btn small add-inline" aria-label="Add something to buy" onClick={() => onSheet({ type: 'buy' })}><Icon name="plus" size={14} />Add</button>
-      </div>
+      <h2 className="sr-only" id="m-tobuy">To buy</h2>
       <div className="matrix-wrap">
         <div className="axis axis-top" aria-hidden="true"><span>Soon</span><span>Can wait</span></div>
         <div className="axis axis-side" aria-hidden="true"><span>Need</span><span>Want</span></div>

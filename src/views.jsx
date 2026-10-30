@@ -230,7 +230,6 @@ export function Setup({ hub, activeAreas, onDone, keepOpen }) {
     return (
       <main className="setup">
         <h1 className="setup-title">What are you<br />keeping track of?</h1>
-        <p className="lede">Areas are the big parts of your life. Projects sit inside them, like MTD359 inside Study, and cards sit inside projects. You can add or rename areas any time.</p>
         <AreasEditor areas={draft} onChange={setDraft} />
         <button className="primary" disabled={!valid.length} onClick={() => {
           keepOpen();

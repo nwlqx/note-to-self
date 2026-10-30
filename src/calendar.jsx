@@ -140,7 +140,6 @@ function DayView({ entries, areasById, onToggle, onOpen, head, day, setDay }) {
             );
           })}
         </div>
-        {timed.length === 0 && <p className="sticker schedule-empty">nothing scheduled, enjoy the space</p>}
       </div>
     </section>
   );

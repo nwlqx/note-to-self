@@ -74,7 +74,7 @@ function DayView({ entries, areasById, onToggle, onOpen, head, day, setDay }) {
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
 
-  const label = parseKey(day).toLocaleDateString('en-SG', { month: 'long', year: 'numeric' });
+  const label = longDate(day);
 
   return (
     <section className="view day-view" aria-label="Day">
@@ -99,7 +99,6 @@ function DayView({ entries, areasById, onToggle, onOpen, head, day, setDay }) {
         ))}
       </div>
 
-      <h2 className="day-title">{day === today ? 'Today' : longDate(day)}</h2>
 
       {allDay.length > 0 && (
         <ul className="all-day" aria-label="All day and due">
@@ -288,9 +287,7 @@ export function DueStrip({ entries, areasById, projects = [], onOpen, onToggle }
 
   return (
     <section className="due-strip-wrap" aria-labelledby="due-head">
-      <h2 id="due-head" className="quiet-head">
-        Due in the next two weeks{count ? <span className="count"> {count}</span> : null}
-      </h2>
+      <h2 id="due-head" className="sr-only">Due in the next two weeks{count ? `, ${count}` : ''}</h2>
       <div className="due-strip" role="list">
         {overdue.length > 0 && (
           <div className="strip-day strip-overdue" role="listitem">

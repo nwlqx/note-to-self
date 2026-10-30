@@ -1,10 +1,10 @@
 // Week, setup and settings.
 import React, { useEffect, useState } from 'react';
 import {
-  PALETTE, hueOf, sortEntries, covers, todayKey, addDays, startOfWeek, parseKey, monthKey, uid,
+  PALETTE, AREA_ICONS, areaIcon, hueOf, sortEntries, covers, todayKey, addDays, startOfWeek, parseKey, monthKey, uid,
 } from './model.js';
 import {
-  Icon, EntryRow, metaFor, areaColor, areaStyle, dayName, shortDate, monthTitle, rangeLabel, ConfirmButton, PALETTES } from './ui.jsx';
+  Icon, EntryRow, metaFor, areaColor, areaStyle, dayName, shortDate, monthTitle, rangeLabel, ConfirmButton } from './ui.jsx';
 
 // ---------- week ----------
 export function assignLanes(ranges) {
@@ -108,6 +108,7 @@ export function WeekView({ entries, areasById, weekStart, setWeekStart, onToggle
 const SUGGESTIONS = ['Work', 'Study', 'Travel', 'Fitness', 'Personal'];
 
 function AreasEditor({ areas, onChange }) {
+  const [iconFor, setIconFor] = useState(null);
   const used = new Set(areas.map((a) => a.color));
   const nextColor = () => (PALETTE.find((p) => !used.has(p.id)) || PALETTE[areas.length % PALETTE.length]).id;
   const add = (name = '') => onChange([...areas, { id: 'a-' + uid(), name, color: nextColor() }]);
@@ -126,6 +127,10 @@ function AreasEditor({ areas, onChange }) {
       <ul>
         {areas.map((a, i) => (
           <li key={a.id} className="area-row" style={areaStyle(a)}>
+            <button type="button" className="area-icon-btn" aria-label={`Icon for ${a.name || 'area'}`} aria-expanded={iconFor === a.id}
+              onClick={() => setIconFor(iconFor === a.id ? null : a.id)}>
+              {areaIcon(a) ? <Icon name={areaIcon(a)} size={18} /> : <span className="m-icon-none">—</span>}
+            </button>
             <input className="area-name" value={a.name} placeholder="Area name" aria-label="Area name"
               onChange={(e) => set(i, { name: e.target.value })} />
             <div className="swatches" role="radiogroup" aria-label={`Colour for ${a.name || 'area'}`}>
@@ -139,6 +144,15 @@ function AreasEditor({ areas, onChange }) {
               <button className="icon-btn" disabled={i === areas.length - 1} onClick={() => move(i, 1)} aria-label="Move down"><Icon name="down" /></button>
               <button className="icon-btn" onClick={() => onChange(areas.filter((_, j) => j !== i))} aria-label={`Remove ${a.name || 'area'}`}><Icon name="close" /></button>
             </div>
+            {iconFor === a.id && (
+              <div className="icon-grid area-icon-grid" role="radiogroup" aria-label={`Icon for ${a.name || 'area'}`}>
+                <button type="button" role="radio" aria-checked={!areaIcon(a)} className="icon-choice icon-none" onClick={() => { set(i, { icon: '' }); setIconFor(null); }}>None</button>
+                {AREA_ICONS.map((ic) => (
+                  <button type="button" key={ic} role="radio" aria-checked={areaIcon(a) === ic} aria-label={ic} title={ic}
+                    className="icon-choice" onClick={() => { set(i, { icon: ic }); setIconFor(null); }}><Icon name={ic} /></button>
+                ))}
+              </div>
+            )}
           </li>
         ))}
       </ul>
@@ -253,9 +267,9 @@ export function Setup({ hub, activeAreas, onDone, keepOpen }) {
 // ---------- settings ----------
 export function SettingsView({ hub, activeAreas, theme }) {
   const [draft, setDraft] = useState(activeAreas);
-  useEffect(() => setDraft(activeAreas), [activeAreas.map((a) => a.id + a.name + a.color).join()]); // eslint-disable-line
-  const changed = JSON.stringify(draft.map(({ id, name, color }) => [id, name, color])) !==
-    JSON.stringify(activeAreas.map(({ id, name, color }) => [id, name, color]));
+  useEffect(() => setDraft(activeAreas), [activeAreas.map((a) => a.id + a.name + a.color + (a.icon ?? '~')).join()]); // eslint-disable-line
+  const changed = JSON.stringify(draft.map(({ id, name, color, icon }) => [id, name, color, icon ?? null])) !==
+    JSON.stringify(activeAreas.map(({ id, name, color, icon }) => [id, name, color, icon ?? null]));
   const cal = hub.data.calendar || {};
   const calendars = calendarsOf(cal);
   return (
@@ -275,16 +289,6 @@ export function SettingsView({ hub, activeAreas, theme }) {
               <button key={id} role="radio" aria-checked={theme.choice === id} onClick={() => theme.setChoice(id)}>{label}</button>
             ))}
           </div>
-          <h3 className="panel-sub">Colour theme</h3>
-          <div className="palette-pick" role="radiogroup" aria-label="Colour theme">
-            {PALETTES.map((p, i) => (
-              <button key={p.id} type="button" role="radio" aria-checked={theme.palette === p.id} className="palette-opt" onClick={() => theme.setPalette(p.id)}>
-                <span className="palette-swatches" aria-hidden="true">{p.swatches.map((c) => <span key={c} style={{ background: c }} />)}</span>
-                <span className="palette-name">Theme {i + 1}<small>{p.name}</small></span>
-              </button>
-            ))}
-          </div>
-          <p className="hint">Saved on this device. The moon and sun button at the top switches between light and dark, in either theme.</p>
         </section>
       )}
 
@@ -314,7 +318,7 @@ export function SettingsView({ hub, activeAreas, theme }) {
             {(cal.calendars || []).filter((c) => !c.ok).map((c) => (
               <p key={c.id} className="error">{c.name} didn't update on the last sync: {c.error}</p>
             ))}
-            {cal.syncedAt && <p className="hint">Calendar last changed {new Date(cal.syncedAt).toLocaleString('en-SG', { dateStyle: 'medium', timeStyle: 'short' })}. It checks for updates every hour.</p>}
+            <p className="hint">Syncs every hour.</p>
           </>
         )}
       </section>
@@ -351,9 +355,8 @@ function NameField({ hub }) {
   const saved = (hub.data.settings.name || '') === name.trim();
   return (
     <form className="name-field" onSubmit={(e) => { e.preventDefault(); hub.setName(name.trim()); }}>
-      <label htmlFor="your-name">Your name, for the greeting on To-do</label>
       <div className="name-row">
-        <input id="your-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" autoComplete="given-name" />
+        <input id="your-name" aria-label="Your name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" autoComplete="given-name" />
         <button className="primary" disabled={saved}>{saved ? 'Saved' : 'Save'}</button>
       </div>
     </form>

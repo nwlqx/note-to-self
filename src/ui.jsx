@@ -220,22 +220,16 @@ export function ConfirmButton({ onConfirm, children, confirmText, className = 't
   );
 }
 
-// Light, dark or follow the device, plus a colour theme (1 Pastel, 2 Linen).
-// Both are stored per device and applied to the root element.
+// Light, dark or follow the device. Stored per device and applied to the root element.
+// The app has one colour theme, Linen (dim gray, queen pink, lavender dust, stone, azureish white),
+// switched on with data-palette="2" on <html> (set in build.mjs, and again here).
 const THEME_KEY = 'hub.theme';
-const PALETTE_KEY = 'hub.palette';
-export const PALETTES = [
-  { id: '1', name: 'Pastel', swatches: ['#F5D0D0', '#D2DDAE', '#F2EDC6', '#DAE9FA', '#2F2E35'] },
-  { id: '2', name: 'Linen', swatches: ['#E8CCD7', '#CFC9DD', '#EBE1D8', '#DEE5ED', '#6C6C6A'] },
-];
-const BARS = { '1': ['#FAF9F7', '#1D1D21'], '2': ['#FAF9F7', '#262624'] };
+const BARS = ['#FAF9F7', '#262624'];
 const systemDark = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches;
 const readKey = (k, d) => { try { return localStorage.getItem(k) || d; } catch { return d; } };
-// Apply the saved colour theme before the first paint, so there's no flash of the other one.
-if (typeof document !== 'undefined' && readKey(PALETTE_KEY, '1') !== '1') document.documentElement.setAttribute('data-palette', readKey(PALETTE_KEY, '1'));
+if (typeof document !== 'undefined') document.documentElement.setAttribute('data-palette', '2');
 export function useTheme() {
   const [choice, setChoice] = React.useState(() => readKey(THEME_KEY, 'system'));
-  const [palette, setPalette] = React.useState(() => readKey(PALETTE_KEY, '1'));
   const [sysDark, setSysDark] = React.useState(systemDark);
   React.useEffect(() => {
     if (typeof matchMedia === 'undefined') return;
@@ -248,13 +242,11 @@ export function useTheme() {
     const root = document.documentElement;
     if (choice === 'system') root.removeAttribute('data-theme');
     else root.setAttribute('data-theme', choice);
-    if (palette === '1') root.removeAttribute('data-palette');
-    else root.setAttribute('data-palette', palette);
-    try { localStorage.setItem(THEME_KEY, choice); localStorage.setItem(PALETTE_KEY, palette); } catch { /* ignore */ }
+    root.setAttribute('data-palette', '2');
+    try { localStorage.setItem(THEME_KEY, choice); localStorage.removeItem('hub.palette'); } catch { /* ignore */ }
     const dark = choice === 'dark' || (choice === 'system' && sysDark);
-    const bars = BARS[palette] || BARS['1'];
-    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', dark ? bars[1] : bars[0]));
-  }, [choice, palette, sysDark]);
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', dark ? BARS[1] : BARS[0]));
+  }, [choice, sysDark]);
   const isDark = choice === 'dark' || (choice === 'system' && sysDark);
-  return { choice, setChoice, palette, setPalette, isDark, toggle: () => setChoice(isDark ? 'light' : 'dark') };
+  return { choice, setChoice, isDark, toggle: () => setChoice(isDark ? 'light' : 'dark') };
 }

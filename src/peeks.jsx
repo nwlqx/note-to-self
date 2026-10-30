@@ -120,7 +120,7 @@ export function CalendarPeek({ entries, projects, areasById, onOpenEntry, onAll,
 }
 
 // ---------- Meals: today's three meals and the grocery list ----------
-const SLOT_HUE = { breakfast: 'yellow', lunch: 'pistachio', dinner: 'peach' };
+const SLOT_HUE = { breakfast: 'pink', lunch: 'sand', dinner: 'lavender', others: 'snow' }; // matches the meal grid
 export function MealsPeek({ meals, onOpenMeal, onAll, children }) {
   const today = todayKey();
   const recipesById = Object.fromEntries(liveRecipes(meals).map((r) => [r.id, r]));

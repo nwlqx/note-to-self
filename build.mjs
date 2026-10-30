@@ -40,13 +40,13 @@ for (const f of FONTS) await fs.copyFile(f.src, `${OUT}/fonts/${f.file}`);
 const fontFaces = FONTS.map((f) => `@font-face{font-family:'${f.family}';font-style:${f.style};font-weight:${f.weight};font-display:swap;src:url(fonts/${f.file}) format('woff2')}`).join('');
 
 const html = `<!doctype html>
-<html lang="en">
+<html lang="en" data-palette="2">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>note to self</title>
 <meta name="theme-color" content="#FAF9F7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1D1D21" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#262624" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">

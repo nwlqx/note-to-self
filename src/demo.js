@@ -1,7 +1,7 @@
 // Sample data for trying the app without connecting GitHub.
 import { addDays, todayKey, startOfWeek, nowIso } from './model.js';
 
-export const DEMO_VERSION = 14;
+export const DEMO_VERSION = 16;
 
 export function demoData() {
   const t = todayKey();
@@ -9,7 +9,7 @@ export function demoData() {
   const ts = nowIso();
   const areas = [
     { id: 'a-work', name: 'Work', color: 'snow', order: 0, updatedAt: ts },
-    { id: 'a-study', name: 'Study', color: 'lavender', order: 1, updatedAt: ts },
+    { id: 'a-study', name: 'Study', color: 'peach', order: 1, updatedAt: ts },
     { id: 'a-travel', name: 'Travel', color: 'yellow', order: 2, updatedAt: ts },
     { id: 'a-fit', name: 'Fitness', color: 'pistachio', order: 3, updatedAt: ts },
     { id: 'a-home', name: 'Personal', color: 'rose', order: 4, updatedAt: ts },
@@ -172,6 +172,7 @@ export function demoData() {
   pm(0, 'dinner', { recipeId: 'r-kfr' }); pm(1, 'dinner', { recipeId: 'r-tomegg' }); pm(2, 'dinner', { recipeId: 'r-soba' });
   pm(3, 'dinner', { text: 'MTD359 seminar, eat at SUSS', cost: 6 }); pm(4, 'dinner', { text: 'Dinner with friends', cost: 35 });
   pm(5, 'lunch', { recipeId: 'r-bowl' }); pm(6, 'breakfast', { text: 'Brunch at Tiong Bahru', cost: 22 });
+  pm(1, 'others', { text: 'Bubble tea', cost: 6.2 }); pm(4, 'others', { text: 'Cheesecake slice', cost: 8.5 }); pm(5, 'others', { text: 'Fruit and nuts', cost: 4 });
   const groceries = [
     ['Rolled oats', '1 cup', 'Overnight oats', true], ['Greek yoghurt', '1 tub', 'Overnight oats'], ['Kimchi', '1 jar', 'Kimchi fried rice'],
     ['Eggs', '6', 'Kimchi fried rice'], ['Salmon fillet', '2', 'Salmon soba'], ['Soba noodles', '1 pack', 'Salmon soba'], ['Dish soap', '', ''],

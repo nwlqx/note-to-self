@@ -1,16 +1,19 @@
 // Data shapes, merging and date helpers. No React here so it can be tested in Node.
 
 export const PALETTE = [
-  { id: 'rose', name: 'Light rose' },
+  // in colour order: reds and pinks, purple, blue, green, yellow
+  { id: 'peach', name: 'Light red' },
   { id: 'pink', name: 'Baby pink' },
-  { id: 'yellow', name: 'Pale yellow' },
-  { id: 'pistachio', name: 'Pistachio' },
+  { id: 'rose', name: 'Light rose' },
+  { id: 'lavender', name: 'Pastel purple' },
   { id: 'snow', name: 'Snow' },
-  { id: 'lavender', name: 'Lavender' },
+  { id: 'pistachio', name: 'Pistachio' },
+  { id: 'yellow', name: 'Pale yellow' },
 ];
 
 // Colours saved by earlier versions of the app, mapped onto the current palette.
 const LEGACY_HUES = {
+  violet: 'lavender',
   tomato: 'pink', olive: 'pistachio', mustard: 'yellow', sky: 'snow', mint: 'pistachio', slate: 'rose',
   indigo: 'snow', moss: 'pistachio', ochre: 'yellow', plum: 'lavender', teal: 'pistachio', rust: 'pink',
 };
@@ -19,11 +22,28 @@ const LEGACY_HUES = {
 export const PROJECT_HUES = [
   { id: 'rose', name: 'Light rose' },
   { id: 'lavender', name: 'Lavender' },
-  { id: 'peach', name: 'Peach' },
+  { id: 'peach', name: 'Light red' },
   { id: 'aqua', name: 'Aqua' },
   { id: 'lilac', name: 'Lilac' },
   { id: 'sand', name: 'Sand' },
 ];
+// Area icons: a suggestion from the area's name, which you can change in Settings.
+export const AREA_ICONS = ['briefcase', 'book', 'plane', 'dumbbell', 'heart', 'home', 'wallet', 'palette', 'camera', 'laptop', 'music', 'leaf', 'cup', 'utensils', 'pencil', 'star', 'flag', 'sparkle'];
+const AREA_ICON_WORDS = [
+  [/work|job|office|career|edupass/, 'briefcase'], [/stud|school|uni|class|course|learn|suss/, 'book'],
+  [/travel|trip|holiday|vacation/, 'plane'], [/fit|gym|run|sport|exercise|health/, 'dumbbell'],
+  [/personal|self|life|me\b/, 'heart'], [/home|house|family|chore/, 'home'], [/money|financ|budget/, 'wallet'],
+  [/art|design|creat|hobby|craft|knit/, 'palette'], [/photo/, 'camera'], [/side|project|dev|code/, 'laptop'],
+  [/music/, 'music'], [/garden|plant/, 'leaf'], [/food|cook|meal/, 'utensils'], [/writ|journal|blog/, 'pencil'],
+];
+export const suggestAreaIcon = (name) => {
+  const n = (name || '').toLowerCase();
+  const hit = AREA_ICON_WORDS.find(([re]) => re.test(n));
+  return hit ? hit[1] : '';
+};
+// An area's icon: its own choice ('' means none), otherwise the suggestion from its name.
+export const areaIcon = (a) => (a?.icon != null ? a.icon : suggestAreaIcon(a?.name));
+
 export const PROJECT_ICONS = ['book', 'plane', 'briefcase', 'dumbbell', 'heart', 'star', 'palette', 'camera', 'laptop', 'music', 'leaf', 'home', 'cup', 'pencil', 'flag', 'sparkle'];
 
 // Projects saved without a colour get a steady one from the project palette.

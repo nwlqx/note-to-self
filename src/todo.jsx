@@ -270,8 +270,10 @@ function Greeting({ name }) {
   return (
     <header className="greeting">
       <h1>
+        {/* keeps the first line clear of the buttons on the right; later lines use the full width */}
+        <span className="greeting-spacer" aria-hidden="true" />
         <span className="greeting-hello">{hello}{name ? ',' : ''}</span>
-        {name && <span className="greeting-name">{name}</span>}
+        {name && <>{' '}<span className="greeting-name">{name}</span></>}
       </h1>
       <p className="greeting-date">{new Date().toLocaleDateString('en-SG', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
     </header>

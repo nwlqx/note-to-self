@@ -341,7 +341,7 @@ export function useHub() {
       const ids = new Set(areas.map((a) => a.id));
       const next = areas.map((a, i) => {
         const prev = old.get(a.id);
-        const changed = !prev || prev.name !== a.name || prev.color !== a.color || prev.order !== i || prev.archived !== a.archived;
+        const changed = !prev || prev.name !== a.name || prev.color !== a.color || (prev.icon ?? null) !== (a.icon ?? null) || prev.order !== i || prev.archived !== a.archived;
         return changed ? { ...a, order: i, updatedAt: nowIso() } : prev;
       });
       for (const a of s.areas || []) {

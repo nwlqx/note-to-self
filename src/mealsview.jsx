@@ -3,8 +3,11 @@
 import React, { useMemo, useState } from 'react';
 import { todayKey, startOfWeek, addDays, parseKey, uid } from './model.js';
 import { SLOTS, weekDays, mealAt, mealInfo, liveRecipes, liveGroceries, newRecipe, newGrocery } from './meals.js';
-import { liveCategories, liveExpenses, sgdOf, money, monthOf } from './money.js';
+import { liveCategories, liveExpenses, sgdOf, money, monthOf, monthLabel } from './money.js';
 import { Sheet, Icon, ConfirmButton, rangeLabel } from './ui.jsx';
+
+// One colour per meal: breakfast pink, lunch beige, dinner purple, others blue.
+export const SLOT_HUES = { breakfast: 'pink', lunch: 'sand', dinner: 'lavender', others: 'snow' };
 
 const FOOD = 'cat-food';
 const dow = (k) => parseKey(k).toLocaleDateString('en-SG', { weekday: 'short' });
@@ -27,7 +30,7 @@ export function MealsPage({ hub, onSheet }) {
   let plannedCount = 0;
   for (const d of days) for (const s of SLOTS) {
     const info = mealInfo(mealAt(m, d, s.id), recipesById);
-    if (info) { planned += info.cost; plannedCount += 1; }
+    if (info) { planned += info.cost; if (!s.extra) plannedCount += 1; }
   }
   const foodCat = liveCategories(hub.data.money).find((c) => c.id === FOOD);
   const foodBudget = Number(foodCat?.budget) || 0;
@@ -49,8 +52,13 @@ export function MealsPage({ hub, onSheet }) {
         <h1>Meals</h1>
       </header>
 
-      <div className="m-month">
-        <h2 className="m-month-name">{weekStart === startOfWeek(today) ? 'This week' : rangeLabel(weekStart, addDays(weekStart, 6))}</h2>
+      <div className="m-month ml-head">
+        <h2 className="sr-only">{weekStart === startOfWeek(today) ? 'This week' : rangeLabel(weekStart, addDays(weekStart, 6))}</h2>
+        <div className="ml-summary">
+          <span><strong>{plannedCount}</strong> of {days.length * SLOTS.filter((s) => !s.extra).length} meals planned {weekStart === startOfWeek(today) ? 'this week' : `for ${rangeLabel(weekStart, addDays(weekStart, 6))}`}</span>
+          {!foodBudget && <span><strong>{money(planned)}</strong> planned this week</span>}
+          {!foodBudget && <span>No Food budget set in Budgeting</span>}
+        </div>
         <div className="m-month-nav">
           {weekStart !== startOfWeek(today) && <button className="text-btn small" onClick={() => setWeekStart(startOfWeek(today))}>This week</button>}
           <button className="icon-btn" aria-label="Previous week" onClick={() => setWeekStart(addDays(weekStart, -7))}><Icon name="left" /></button>
@@ -58,31 +66,28 @@ export function MealsPage({ hub, onSheet }) {
         </div>
       </div>
 
-      <div className="ml-summary">
-        <span><strong>{plannedCount}</strong> of 21 meals planned</span>
-        <span><strong>{money(planned)}</strong> planned this week</span>
-        {foodBudget > 0 ? (
-          <span className={foodLeft < 0 ? 'm-over' : undefined}>
-            Food budget: <strong>{money(Math.abs(foodLeft))}</strong> {foodLeft < 0 ? 'over' : 'left'} this month
-          </span>
-        ) : <span>No Food budget set in Money</span>}
-      </div>
+      {foodBudget > 0 && <FoodBar budget={foodBudget} spent={foodSpent} planned={planned} month={monthLabel(monthOf(today)).split(' ')[0]} />}
 
       <div className="ml-week" role="grid" aria-label="Meal plan">
-        {days.map((d) => (
+        <div className="ml-axis" aria-hidden="true">
+          <span className="ml-axis-corner" />
+          {SLOTS.map((s) => <span key={s.id} className="ml-axis-label" data-slot={s.id}>{s.label}</span>)}
+        </div>
+        {days.map((d, di) => (
           <div key={d} className="ml-day" role="row" data-today={d === today || undefined}>
             <div className="ml-day-head" role="rowheader">
               <span className="ml-dow">{dow(d)}</span>
               <span className="ml-dnum">{dnum(d)}</span>
             </div>
-            {SLOTS.map((s) => {
+            {SLOTS.map((s, si) => {
               const meal = mealAt(m, d, s.id);
               const info = mealInfo(meal, recipesById);
               return (
                 <button key={s.id} role="gridcell" className="ml-slot" data-slot={s.id} data-empty={!info || undefined}
+                  style={info ? { '--mh': `var(--${SLOT_HUES[s.id]})` } : undefined}
                   onClick={() => onSheet({ type: 'meal', date: d, slot: s.id })}
                   aria-label={`${s.label}, ${dow(d)} ${dnum(d)}: ${info ? info.name : 'nothing planned'}`}>
-                  <span className="ml-slot-label">{s.label}</span>
+                  {s.extra && <span className="ml-slot-label">{s.label}</span>}
                   {info ? (
                     <>
                       <span className="ml-meal">{info.name}</span>
@@ -162,6 +167,57 @@ function GroceryRow({ g, hub }) {
       </span>
       <button className="icon-btn" aria-label={`Remove ${g.name}`} onClick={() => hub.deleteGrocery(g.id)}><Icon name="close" size={15} /></button>
     </li>
+  );
+}
+
+// ---------- the Food budget as a bar, like the one on Budgeting ----------
+// Spent so far this month, then this week's planned meals, then what's left.
+function FoodBar({ budget, spent, planned, month }) {
+  const [hover, setHover] = useState(null);
+  const scale = Math.max(budget, spent + planned) || 1;
+  const left = budget - spent - planned;
+  const pct = (v) => `${(Math.max(0, v) / scale) * 100}%`;
+  const ofBudget = (v) => `${Math.round((v / budget) * 100)}% of budget`;
+  const parts = [
+    { id: 'spent', cls: 'ml-food-spent', value: spent, label: 'Spent on food so far', from: 0 },
+    { id: 'planned', cls: 'ml-food-planned', value: planned, label: 'Planned this week', from: spent },
+    ...(left > 0 ? [{ id: 'left', cls: 'ml-food-left', value: left, label: 'Left this month', from: spent + planned }] : []),
+  ];
+  const h = parts.find((p) => p.id === hover);
+  const mid = h ? ((h.from + Math.max(0, h.value) / 2) / scale) * 100 : 0;
+  return (
+    <div className="ml-food" role="group" aria-label="Food budget">
+      <div className="m-stack-top">
+        <span className="ml-food-title">Food budget, {month}</span>
+        <span className="m-stack-sum">
+          {money(spent + planned, 'SGD', { compact: true })} of {money(budget, 'SGD', { compact: true })}
+          {left < 0 ? <strong className="m-over"> ({money(-left, 'SGD', { compact: true })} over)</strong> : null}
+        </span>
+      </div>
+      <div className="m-stack-wrap" onPointerLeave={() => setHover(null)}>
+        {h && (
+          <span className="m-stack-tip" role="status" style={{ left: `clamp(6rem, ${mid}%, calc(100% - 6rem))` }}>
+            <span className={`ml-key ml-key-${h.id}`} aria-hidden="true" />
+            <strong>{h.label}</strong> {money(h.value)}<span className="m-stack-pct">{ofBudget(h.value)}</span>
+          </span>
+        )}
+        <span className="ml-food-bar">
+          {parts.map((p) => (
+            <button key={p.id} type="button" className={`ml-food-seg ${p.cls}`} style={{ width: pct(p.value) }}
+              data-dim={hover && hover !== p.id ? '' : undefined}
+              aria-label={`${p.label}: ${money(p.value)}, ${ofBudget(p.value)}`}
+              onPointerEnter={() => setHover(p.id)} onFocus={() => setHover(p.id)} onBlur={() => setHover(null)}
+              onClick={() => setHover(hover === p.id ? null : p.id)}>
+              {p.id === 'left' && <span>{money(left, 'SGD', { compact: true })} left</span>}
+            </button>
+          ))}
+        </span>
+      </div>
+      <ul className="m-stack-legend ml-food-legend">
+        <li><span className="ml-key ml-key-spent" />Spent {money(spent, 'SGD', { compact: true })}</li>
+        <li><span className="ml-key ml-key-planned" />Planned this week {money(planned, 'SGD', { compact: true })}</li>
+      </ul>
+    </div>
   );
 }
 

@@ -1,6 +1,6 @@
 // Projects overview (home), the project board and list, and project settings.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { normKind, listsOf, sectionOf, orderBetween, newProject, fallbackHue, PROJECT_HUES, PROJECT_ICONS, hueOf, todayKey, addDays, sortEntries, isOpenTask, uid } from './model.js';
+import { normKind, listsOf, sectionOf, orderBetween, newProject, fallbackHue, PROJECT_HUES, PROJECT_ICONS, areaIcon, hueOf, todayKey, addDays, sortEntries, isOpenTask, uid } from './model.js';
 import { useDragSort, dropOrder } from './drag.js';
 import { DueStrip } from './calendar.jsx';
 import { liveExpenses, sgdOf, money } from './money.js';
@@ -41,7 +41,9 @@ export function ProjectsOverview({ hub, areas, projects, entries, areasById, onO
         return (
           <section key={a.id} className="area-block" style={areaStyle(a)}>
             <div className="area-head">
-              <h2><span className="area-swatch" aria-hidden="true" /><span className="hl-text">{a.name}</span></h2>
+              <h2>{areaIcon(a)
+                ? <span className="area-icon" aria-hidden="true"><Icon name={areaIcon(a)} size={18} /></span>
+                : <span className="area-swatch" aria-hidden="true" />}<span className="hl-text">{a.name}</span></h2>
               <button className="text-btn small add-inline" aria-label={`New project in ${a.name}`} onClick={() => onNewProject(a.id)}><Icon name="plus" size={14} />Add</button>
             </div>
             {list.length === 0 && loose.length === 0 && (

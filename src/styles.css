@@ -2299,3 +2299,175 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
 }
 .todo-head { justify-content: flex-end; align-items: center; }
 .todo-head { margin-top: calc(var(--gap-section) - 16px); margin-bottom: 8px; }
+/* Meals: the week summary shares a row with the week arrows */
+.ml-head { align-items: center; }
+.ml-head .ml-summary { margin: 0; }
+.ml-head .m-month-nav { margin-left: auto; flex: none; }
+.day-strip + .all-day, .day-strip + .schedule { margin-top: var(--s5); }
+
+/* Meals: Breakfast / Lunch / Dinner as table headers instead of a label on every card */
+.ml-axis-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.02em; color: var(--ink-soft); }
+@media (min-width: 700px) {
+  .ml-week {
+    grid-template-columns: max-content repeat(7, minmax(0, 1fr));
+    grid-template-rows: auto repeat(3, auto);
+    grid-auto-flow: column; column-gap: 8px; row-gap: 6px;
+  }
+  .ml-axis, .ml-day { display: contents; }
+  .ml-axis-label { align-self: center; padding-right: 6px; }
+  .ml-slot { height: 100%; }
+}
+@media (max-width: 699px) {
+  .ml-axis { display: grid; grid-template-columns: 44px repeat(3, minmax(0, 1fr)); gap: 6px; padding: 0 0 6px; }
+  .ml-axis-label { padding-left: 8px; }
+}
+/* Meals: an Others row for desserts, snacks and drinks */
+.ml-slot[data-slot="others"]:not([data-empty]) { background: var(--lavender-soft); }
+@media (min-width: 700px) {
+  .ml-week { grid-template-rows: auto repeat(4, auto); }
+  .ml-slot[data-slot="others"] .ml-slot-label { display: none; }
+}
+@media (max-width: 699px) {
+  .ml-day { grid-template-rows: auto auto; }
+  .ml-day-head { grid-row: 1 / span 2; }
+  .ml-slot[data-slot="others"] { grid-column: 2 / -1; min-height: 0; flex-direction: row; align-items: baseline; gap: 8px; padding: 6px 8px; }
+}
+@media (max-width: 699px) { .ml-axis-label[data-slot="others"] { display: none; } }
+/* Meals: Food budget bar */
+.ml-food { margin: var(--s4) 0 var(--s6); }
+.ml-food-title { font-weight: 600; font-size: 0.9375rem; }
+.ml-food-bar { display: flex; height: 22px; border-radius: 7px; overflow: hidden; background: var(--surface-sunken); }
+.ml-food-spent { background: var(--peach); }
+.ml-food-planned {
+  background: repeating-linear-gradient(135deg, var(--peach) 0 6px, color-mix(in srgb, var(--peach) 45%, var(--surface)) 6px 12px);
+  box-shadow: inset 2px 0 0 var(--surface);
+}
+.ml-food-left { display: flex; align-items: center; justify-content: center; min-width: 0; overflow: hidden; }
+.ml-food-left span { font-size: 0.8125rem; font-weight: 600; color: var(--ink-soft); white-space: nowrap; padding: 0 8px; font-variant-numeric: tabular-nums; }
+.ml-food-legend li { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--ink-soft); }
+.ml-key { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.ml-key-spent { background: var(--peach); }
+.ml-key-planned { background: repeating-linear-gradient(135deg, var(--peach) 0 3px, color-mix(in srgb, var(--peach) 45%, var(--surface)) 3px 6px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--peach-ink) 25%, transparent); }
+.ml-food .m-stack-wrap { margin: 0; padding: 0; }
+.ml-food-seg { all: unset; box-sizing: border-box; height: 100%; cursor: default; transition: opacity 120ms; }
+.ml-food-seg:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.ml-food-seg[data-dim] { opacity: .5; }
+.ml-key-left { background: var(--surface-sunken); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.ml-food-seg.ml-food-spent { background: var(--peach); }
+.ml-food-seg.ml-food-planned { background: repeating-linear-gradient(135deg, var(--peach) 0 6px, color-mix(in srgb, var(--peach) 45%, var(--surface)) 6px 12px); box-shadow: inset 2px 0 0 var(--surface); }
+.ml-food-seg.ml-food-left { display: flex; align-items: center; justify-content: center; overflow: hidden; }
+/* Food budget bar in pink */
+.ml-food-seg.ml-food-spent, .ml-key-spent { background: var(--pink); }
+.ml-food-seg.ml-food-planned { background: repeating-linear-gradient(135deg, var(--pink) 0 6px, color-mix(in srgb, var(--pink) 45%, var(--surface)) 6px 12px); }
+.ml-key-planned { background: repeating-linear-gradient(135deg, var(--pink) 0 3px, color-mix(in srgb, var(--pink) 45%, var(--surface)) 3px 6px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pink-ink) 25%, transparent); }
+/* Meals: livelier colours, one full pastel per meal */
+.ml-slot[data-slot="breakfast"]:not([data-empty]) { background: var(--yellow); color: var(--on-yellow); }
+.ml-slot[data-slot="lunch"]:not([data-empty]) { background: var(--pistachio); color: var(--on-pistachio); }
+.ml-slot[data-slot="dinner"]:not([data-empty]) { background: var(--peach); color: var(--on-peach); }
+.ml-slot[data-slot="others"]:not([data-empty]) { background: var(--lavender); color: var(--on-lavender); }
+.ml-slot:not([data-empty]) { box-shadow: none; }
+.ml-slot:not([data-empty]) .ml-cost, .ml-slot:not([data-empty]) .ml-slot-label { color: inherit; opacity: .75; }
+.ml-axis-label::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.ml-axis-label[data-slot="breakfast"]::before { background: var(--yellow); }
+.ml-axis-label[data-slot="lunch"]::before { background: var(--pistachio); }
+.ml-axis-label[data-slot="dinner"]::before { background: var(--peach); }
+.ml-axis-label[data-slot="others"]::before { background: var(--lavender); }
+/* Meals: each dish in its own pastel (set per card), not one colour per row */
+.ml-slot:not([data-empty])[data-slot] { background: var(--mh, var(--surface)); color: var(--ink-fixed); }
+.ml-axis-label::before { display: none; }
+/* row headers get a dot in their meal's colour again */
+.ml-axis-label::before { display: inline-block; }
+.ml-axis-label[data-slot="breakfast"]::before { background: var(--sand); }
+.ml-axis-label[data-slot="lunch"]::before { background: var(--pink); }
+.ml-axis-label[data-slot="dinner"]::before { background: var(--lavender); }
+.ml-axis-label[data-slot="others"]::before { background: var(--snow); }
+.ml-axis-label[data-slot="breakfast"]::before { background: var(--pink); }
+.ml-axis-label[data-slot="lunch"]::before { background: var(--sand); }
+/* Food budget bar in green, so it doesn't clash with the pink breakfast cards */
+.ml-food-seg.ml-food-spent, .ml-key-spent { background: var(--pistachio); }
+.ml-food-seg.ml-food-planned { background: repeating-linear-gradient(135deg, var(--pistachio) 0 6px, color-mix(in srgb, var(--pistachio) 45%, var(--surface)) 6px 12px); }
+.ml-key-planned { background: repeating-linear-gradient(135deg, var(--pistachio) 0 3px, color-mix(in srgb, var(--pistachio) 45%, var(--surface)) 3px 6px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pistachio-ink) 25%, transparent); }
+/* area icons */
+.area-row { grid-template-columns: auto 1fr auto; }
+.area-row .area-name { grid-column: 2; }
+.area-row .swatches { grid-column: 2; }
+.area-row .row-actions { grid-column: 3; }
+.area-icon-btn { grid-row: 1; grid-column: 1; width: 40px; height: 40px; min-height: 40px; padding: 0; display: grid; place-items: center; border-radius: 10px; background: var(--cb); color: var(--co, var(--ink-fixed)); }
+.area-icon-btn[aria-expanded="true"] { box-shadow: inset 0 0 0 2px var(--ink); }
+.area-icon-grid { grid-column: 1 / -1; color: var(--ink); }
+.area-head .area-icon { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: var(--cb); color: var(--co, var(--ink-fixed)); flex: none; }
+/* "Light rose" made lighter and cooler so it reads differently from baby pink */
+:root { --rose: #FDE3EF; --rose-soft: #FEF2F8; --rose-ink: #A0456F; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --rose: #EDC9DA; --rose-soft: #3C2B33; --rose-ink: #F2C6DA; } }
+:root[data-theme="dark"] { --rose: #EDC9DA; --rose-soft: #3C2B33; --rose-ink: #F2C6DA; }
+:root[data-palette="2"] { --rose: #F8E7EF; --rose-soft: #FCF4F8; --rose-ink: #8E4A68; }
+@media (prefers-color-scheme: dark) { :root[data-palette="2"]:not([data-theme="light"]) { --rose: #E6D0DA; --rose-soft: #3A2F34; --rose-ink: #F0D3E0; } }
+:root[data-palette="2"][data-theme="dark"] { --rose: #E6D0DA; --rose-soft: #3A2F34; --rose-ink: #F0D3E0; }
+/* peach: more saturated so it doesn't read as beige */
+:root { --peach: #FCC39B; --peach-soft: #FEE8D8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --peach: #EEB487; } }
+:root[data-theme="dark"] { --peach: #EEB487; }
+:root[data-palette="2"] { --peach: #EEC9B4; --peach-soft: #F8EAE1; }
+@media (prefers-color-scheme: dark) { :root[data-palette="2"]:not([data-theme="light"]) { --peach: #DDB9A4; } }
+:root[data-palette="2"][data-theme="dark"] { --peach: #DDB9A4; }
+/* peach: the original pinkish peach, just deeper */
+:root { --peach: #F3BEA3; --peach-soft: #FBE7DC; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --peach: #E2AE95; } }
+:root[data-theme="dark"] { --peach: #E2AE95; }
+:root[data-palette="2"] { --peach: #E9C4B4; --peach-soft: #F7E9E2; }
+@media (prefers-color-scheme: dark) { :root[data-palette="2"]:not([data-theme="light"]) { --peach: #D9B4A5; } }
+:root[data-palette="2"][data-theme="dark"] { --peach: #D9B4A5; }
+/* peach: pinker, less orange */
+:root { --peach: #F2C0B2; --peach-soft: #FBE9E4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --peach: #E1B0A3; } }
+:root[data-theme="dark"] { --peach: #E1B0A3; }
+:root[data-palette="2"] { --peach: #EAC6BB; --peach-soft: #F7EBE6; }
+@media (prefers-color-scheme: dark) { :root[data-palette="2"]:not([data-theme="light"]) { --peach: #D9B6AB; } }
+:root[data-palette="2"][data-theme="dark"] { --peach: #D9B6AB; }
+/* peach: a touch more muted */
+:root { --peach: #E9C5BA; --peach-soft: #F8ECE8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --peach: #D8B5AA; } }
+:root[data-theme="dark"] { --peach: #D8B5AA; }
+/* the "peach" swatch is now a light red */
+:root { --peach: #F2AFAE; --peach-soft: #FCE7E7; --peach-ink: #9A3338; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --peach: #E09E9D; --peach-soft: #3E2626; --peach-ink: #F2B3B2; } }
+:root[data-theme="dark"] { --peach: #E09E9D; --peach-soft: #3E2626; --peach-ink: #F2B3B2; }
+:root[data-palette="2"] { --peach: #E4B7B5; --peach-soft: #F6E8E7; --peach-ink: #8A4442; }
+@media (prefers-color-scheme: dark) { :root[data-palette="2"]:not([data-theme="light"]) { --peach: #D3A7A5; --peach-soft: #3A2C2B; --peach-ink: #EBC2C0; } }
+:root[data-palette="2"][data-theme="dark"] { --peach: #D3A7A5; --peach-soft: #3A2C2B; --peach-ink: #EBC2C0; }
+/* baby pink: brighter, leaning magenta */
+:root { --pink: #F6C3D8; --pink-soft: #FCE8F0; --pink-ink: #A2336A; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pink: #E7B2C9; --pink-soft: #41283A; --pink-ink: #F3BBD3; } }
+:root[data-theme="dark"] { --pink: #E7B2C9; --pink-soft: #41283A; --pink-ink: #F3BBD3; }
+/* Theme 2 keeps its own Queen Pink */
+:root[data-palette="2"] { --pink: #E8CCD7; --pink-soft: #F5E8ED; --pink-ink: #8A4C64; }
+@media (prefers-color-scheme: dark) { :root[data-palette="2"]:not([data-theme="light"]) { --pink: #DDBFCB; --pink-soft: #3E3036; --pink-ink: #EDC6D5; } }
+:root[data-palette="2"][data-theme="dark"] { --pink: #DDBFCB; --pink-soft: #3E3036; --pink-ink: #EDC6D5; }
+/* purples for areas: pastel purple (lavender) and a deeper purple (violet) */
+:root { --violet: #C6B1EC; --violet-soft: #EEE7FA; --violet-ink: #5B3A9A; --on-violet: var(--ink-fixed); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --violet: #B9A4E0; --violet-soft: #30283F; --violet-ink: #D4C4F3; } }
+:root[data-theme="dark"] { --violet: #B9A4E0; --violet-soft: #30283F; --violet-ink: #D4C4F3; }
+:root[data-palette="2"] { --violet: #BFB4D6; --violet-soft: #ECE8F3; --violet-ink: #554874; }
+@media (prefers-color-scheme: dark) { :root[data-palette="2"]:not([data-theme="light"]) { --violet: #B2A7C9; --violet-soft: #312D3B; --violet-ink: #D3CBE6; } }
+:root[data-palette="2"][data-theme="dark"] { --violet: #B2A7C9; --violet-soft: #312D3B; --violet-ink: #D3CBE6; }
+
+/* ---------- greeting: wraps like normal text, the name stays whole ----------
+   Only the first line steps around the buttons; "afternoon, Natasha" can share a line. */
+.greeting h1 { display: block; padding-right: 0; min-height: 0; }
+.greeting-spacer { float: right; width: calc(var(--bar-w, 150px) + var(--s3)); height: var(--head-h); }
+.greeting-hello, .greeting-name { display: inline; }
+.greeting-name { white-space: nowrap; }
+@media (max-width: 899px) {
+  .greeting h1 { font-size: clamp(2rem, 9vw, 3rem); line-height: 1.04; }
+  /* keep the greeting the largest text on phones */
+  .view-head h1 { font-size: 2rem; }
+  .m-big:not(.small) { font-size: 2rem; }
+}
+
+/* ---------- sync status: smaller and quieter ---------- */
+.sync { font-size: 0.75rem; color: var(--ink-faint); opacity: .8; font-style: normal; }
+@media (max-width: 899px) {
+  /* on phones it sits under the round buttons instead of beside them */
+  .topbar .sync { position: absolute; top: calc(100% + 4px); right: 4px; font-size: 0.6875rem; white-space: nowrap; }
+}
+.m-tile-name .project-icon { width: 22px; height: 22px; border-radius: 7px; background: var(--cs); color: var(--c); align-items: center; justify-content: center; }

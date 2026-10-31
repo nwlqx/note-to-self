@@ -7,7 +7,7 @@ import { CalendarPage } from './calendar.jsx';
 import { ProjectsOverview, ProjectView, ProjectSheet } from './projects.jsx';
 import { CardSheet, CalendarSheet } from './card.jsx';
 import { TodoView } from './todo.jsx';
-import { MoneyPage, ExpenseSheet, BillSheet, BudgetsSheet, CurrenciesSheet, SpendingSheet, CategorySheet } from './moneyview.jsx';
+import { MoneyPage, ExpenseSheet, BillSheet, BudgetsSheet, CurrenciesSheet, SpendingSheet, CategorySheet, BillsSheet } from './moneyview.jsx';
 import { BuySheet } from './buyview.jsx';
 import { billEntries } from './money.js';
 import { MealsPage, MealSheet, RecipeSheet } from './mealsview.jsx';
@@ -155,7 +155,7 @@ export default function App() {
         : { type: 'card', cardId: entry.item.id },
   );
   // Sheets opened from another sheet (an expense from a project's spending) return to it when closed.
-  const openSheet = (next) => setSheet((cur) => (cur && (cur.type === 'spending' || cur.type === 'category') ? { ...next, back: cur } : next));
+  const openSheet = (next) => setSheet((cur) => (cur && (cur.type === 'spending' || cur.type === 'category' || cur.type === 'bills') ? { ...next, back: cur } : next));
   const closeSheet = () => setSheet((cur) => cur?.back || null);
   const openCard = (id) => setSheet({ type: 'card', cardId: id });
   const props = { entries, areas: activeAreas, areasById, onToggle: hub.toggleDone, onOpen: openEntry };
@@ -274,6 +274,7 @@ export default function App() {
         <ExpenseSheet key={sheet.id || 'new-x'} hub={hub} id={sheet.id} defaults={sheet.defaults} projects={projects} areasById={areasById} onClose={closeSheet} />
       )}
       {sheet?.type === 'buy' && <BuySheet key={sheet.id || 'new-w'} hub={hub} id={sheet.id} defaults={sheet.defaults} projects={projects} onClose={closeSheet} />}
+      {sheet?.type === 'bills' && <BillsSheet hub={hub} onSheet={openSheet} onClose={closeSheet} />}
       {sheet?.type === 'bill' && <BillSheet key={sheet.id || 'new-b'} hub={hub} id={sheet.id} projects={projects} areasById={areasById} onClose={closeSheet} />}
       {sheet?.type === 'meal' && <MealSheet key={sheet.date + sheet.slot} hub={hub} date={sheet.date} slot={sheet.slot} onSheet={setSheet} onClose={closeSheet} />}
       {sheet?.type === 'recipe' && <RecipeSheet key={sheet.id || 'new-r'} hub={hub} id={sheet.id} onClose={closeSheet} />}

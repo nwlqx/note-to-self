@@ -200,7 +200,13 @@ export function InlineAdd({ onAdd, label = 'Add card', placeholder = 'Card title
     if (e.key === 'Escape') { e.stopPropagation(); close(); }
   };
   if (!open) {
-    return <button className="inline-add" onClick={() => setOpen(true)}><Icon name="plus" size={16} />{label}</button>;
+    // The words after the first are wrapped so very narrow cards can shorten "Add a task" to "Add".
+    const [first, ...rest] = label.split(' ');
+    return (
+      <button className="inline-add" aria-label={label} onClick={() => setOpen(true)}>
+        <Icon name="plus" size={16} /><span>{first}{rest.length > 0 && <span className="inline-add-rest">{' ' + rest.join(' ')}</span>}</span>
+      </button>
+    );
   }
   return (
     // Moving between the two boxes isn't leaving the form, so only submit when focus goes elsewhere.

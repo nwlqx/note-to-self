@@ -15,7 +15,7 @@ export function ToBuy({ hub, projects, onSheet }) {
   const m = hub.data.money;
   const today = todayKey();
   const projectsById = Object.fromEntries(projects.map((p) => [p.id, p]));
-  const [expanded, setExpanded] = useState(() => new Set());
+  const [focus, setFocus] = useState(null); // a quadrant opened full width on phones, as on To-do
   const all = liveBuys(m);
   const shown = all.filter((b) => !b.bought || (b.boughtOn && b.boughtOn >= addDays(today, -KEEP_BOUGHT_DAYS)));
   const zones = {};
@@ -82,8 +82,7 @@ export function ToBuy({ hub, projects, onSheet }) {
   const renderQuadrant = (q) => {
     const list = zones[q.id];
     const { rows, lineAtEnd } = rowsFor(list, q.id);
-    const open = expanded.has(q.id);
-    const limit = wide || open ? Infinity : 4;
+    const limit = wide || focus === q.id ? Infinity : 4;
     const vis = rows.slice(0, drag ? rows.length : limit);
     const more = rows.length - vis.length;
     const left = list.filter((b) => !b.bought);
@@ -92,7 +91,11 @@ export function ToBuy({ hub, projects, onSheet }) {
     return (
       <section key={q.id} className="quad-cell" data-drop={q.id} data-q={q.id} aria-labelledby={`bq-${q.id}`}>
         <header className="quad-head">
-          <span className="quad-title" id={`bq-${q.id}`}><span className="quad-name">{q.name}</span></span>
+          <button className="quad-title" id={`bq-${q.id}`} onClick={() => !wide && setFocus(focus === q.id ? null : q.id)} disabled={wide}>
+            <span className="quad-name">{q.name}</span>
+            {!wide && focus !== q.id && <span className="sr-only">, open full screen</span>}
+            {!wide && focus !== q.id && <span className="quad-open" aria-hidden="true"><Icon name="arrow" size={14} /></span>}
+          </button>
           <span className="quad-hint">{q.hint}</span>
         </header>
         <div className="quad" data-q={q.id}>
@@ -100,7 +103,7 @@ export function ToBuy({ hub, projects, onSheet }) {
             {vis.map((r) => renderRow(r, q.id))}
             {lineAtEnd && <li className="drop-line" style={{ height: drag.h }} />}
           </ul>
-          {more > 0 && <button className="text-btn small quiet" onClick={() => setExpanded((s) => new Set(s).add(q.id))}>{more} more</button>}
+          {more > 0 && <button className="text-btn small quiet" onClick={() => setFocus(q.id)}>{more} more</button>}
           <InlineAdd label="Add an item" placeholder="Item" extra="price" onAdd={(t, price) => add(q.id, t, price)} />
           <div className="buy-foot">
             {count > 0 && (
@@ -115,11 +118,18 @@ export function ToBuy({ hub, projects, onSheet }) {
   return (
     <section className="m-section to-buy" aria-labelledby="m-tobuy">
       <h2 className="sr-only" id="m-tobuy">To buy</h2>
-      <div className="matrix-wrap">
-        <div className="axis axis-top" aria-hidden="true"><span>Soon</span><span>Can wait</span></div>
-        <div className="axis axis-side" aria-hidden="true"><span>Need</span><span>Want</span></div>
-        <div className="matrix">{BUY_QUADRANTS.map(renderQuadrant)}</div>
-      </div>
+      {focus && !wide ? (
+        <div className="quad-focus">
+          <button className="back" onClick={() => setFocus(null)}><Icon name="left" size={18} />Back</button>
+          {renderQuadrant(BUY_QUADRANTS.find((q) => q.id === focus))}
+        </div>
+      ) : (
+        <div className="matrix-wrap">
+          <div className="axis axis-top" aria-hidden="true"><span>Soon</span><span>Can wait</span></div>
+          <div className="axis axis-side" aria-hidden="true"><span>Need</span><span>Want</span></div>
+          <div className="matrix">{BUY_QUADRANTS.map(renderQuadrant)}</div>
+        </div>
+      )}
       <DragGhost drag={drag} />
     </section>
   );

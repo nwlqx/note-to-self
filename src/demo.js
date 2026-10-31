@@ -1,7 +1,7 @@
 // Sample data for trying the app without connecting GitHub.
 import { addDays, todayKey, startOfWeek, nowIso } from './model.js';
 
-export const DEMO_VERSION = 17;
+export const DEMO_VERSION = 18;
 
 export function demoData() {
   const t = todayKey();
@@ -131,6 +131,9 @@ export function demoData() {
     bill('demo-b-spotify', 'Spotify', 11.98, 3),
     bill('demo-b-phone', 'Phone plan', 20, 8),
     bill('demo-b-icloud', 'iCloud+', 4.48, 15),
+    bill('demo-b-netflix', 'Netflix', 17.98, 5),
+    bill('demo-b-power', 'Electricity', 85.4, 11),
+    bill('demo-b-insure', 'Travel insurance', 42, 22),
     bill('demo-b-domain', 'nwlqx.com domain', 22, 41, { every: 'year' }),
   ];
   let wn = 0;

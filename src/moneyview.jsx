@@ -37,6 +37,40 @@ export function billDueLabel(b, today = todayKey()) {
   return `Due ${shortDate(b.next)}`;
 }
 
+// The Bills card lists this many; the rest open in the Bills drawer.
+const BILLS_SHOWN = 5;
+
+// Bill rows, shared by the Bills card and the Bills drawer.
+function BillRows({ list, catsById, today, hub, onOpen }) {
+  return (
+    <ul className="m-bill-list">
+      {list.map((b) => {
+        const c = catsById[b.category];
+        return (
+          <li key={b.id} style={areaStyle(c ? { color: c.color } : null)} data-late={b.next < today || undefined} data-today={b.next === today || undefined}>
+            {/* The bill button stretches over the whole row, so tapping the amount opens it too.
+                Amount and Paid share a column that stacks on narrow screens. */}
+            <button className="m-bill" onClick={() => onOpen(b.id)}>
+              <span className="m-row-text">
+                <span className="m-row-title">{b.name}</span>
+                <span className="m-row-meta m-due">{billDueLabel(b, today)}</span>
+              </span>
+            </button>
+            <span className="m-bill-side">
+              <span className="m-amount-main">{money(b.amount, b.currency || BASE)}</span>
+              {b.next <= addDays(today, 3) && (
+                <button className="m-paid" onClick={() => hub.payBill(b.id)} aria-label={`Mark ${b.name} paid`}>
+                  <Icon name="check" size={16} />Paid
+                </button>
+              )}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function AmountLine({ x }) {
   const foreign = x.currency && x.currency !== BASE;
   return (
@@ -203,35 +237,18 @@ export function MoneyPage({ hub, projects, areasById, onSheet, onOpenProject }) 
         </div>
 
         <div className="m-card m-bills">
-          <div className="m-card-head">
-            <span className="tile-label">Bills</span>
+          {/* the whole header line, title and monthly total, opens the Bills drawer */}
+          <button type="button" className="m-card-head m-bills-head" onClick={() => onSheet({ type: 'bills' })}>
+            <span className="m-stack-title">Bills<Icon name="arrow" size={14} /></span>
             <span className="m-sub">{money(billsMonthly)} a month</span>
-          </div>
+          </button>
           {upcoming.length ? (
-            <ul className="m-bill-list">
-              {upcoming.slice(0, 5).map((b) => {
-                const c = catsById[b.category];
-                const late = b.next < today;
-                return (
-                  <li key={b.id} style={areaStyle(c ? { color: c.color } : null)} data-late={late || undefined} data-today={b.next === today || undefined}>
-                    <button className="m-bill" onClick={() => onSheet({ type: 'bill', id: b.id })}>
-                      <span className="m-row-text">
-                        <span className="m-row-title">{b.name}</span>
-                        <span className="m-row-meta m-due">{billDueLabel(b, today)}</span>
-                      </span>
-                      <span className="m-amount-main">{money(b.amount, b.currency || BASE)}</span>
-                    </button>
-                    {b.next <= addDays(today, 3) && (
-                      <button className="m-paid" onClick={() => hub.payBill(b.id)} aria-label={`Mark ${b.name} paid`}>
-                        <Icon name="check" size={16} />Paid
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+            <BillRows list={upcoming.slice(0, BILLS_SHOWN)} catsById={catsById} today={today} hub={hub} onOpen={(id) => onSheet({ type: 'bill', id })} />
           ) : (
             <p className="tile-empty">{bills.length ? 'Nothing due in the next month' : 'No bills yet'}</p>
+          )}
+          {upcoming.length > BILLS_SHOWN && (
+            <button className="text-btn small quiet m-bill-more" onClick={() => onSheet({ type: 'bills' })}>{upcoming.length - BILLS_SHOWN} more</button>
           )}
           <button className="m-card-foot" onClick={() => onSheet({ type: 'bill' })}>
             <Icon name="plus" size={16} />Add a bill or subscription
@@ -450,7 +467,7 @@ export function BillSheet({ hub, id, projects, areasById, onClose }) {
       </fieldset>
       {stored && (
         <div className="m-bill-actions">
-          <button type="button" className="secondary" onClick={() => { hub.payBill(stored.id); onClose(); }}><Icon name="check" size={16} />Mark paid</button>
+          <button type="button" className="secondary" aria-label={`Mark ${stored.name} paid`} onClick={() => { hub.payBill(stored.id); onClose(); }}><Icon name="check" size={16} />Paid</button>
           <button type="button" className="text-btn" onClick={() => { hub.skipBill(stored.id); onClose(); }}>Skip this one</button>
           {paidList.length > 0 && <span className="hint">Last paid {shortDate(paidList[0].date)}</span>}
         </div>
@@ -615,6 +632,29 @@ export function SpendingSheet({ hub, projectId, projects, areasById, onSheet, on
       {bills.length > 0 && <p className="hint">Bills tagged here: {bills.map((b) => b.name).join(', ')}.</p>}
       <div className="sheet-actions">
         <button className="primary" onClick={() => onSheet({ type: 'expense', defaults: { projectId } })}><Icon name="plus" size={18} />Log spending</button>
+        <button className="text-btn" onClick={onClose}>Close</button>
+      </div>
+    </Sheet>
+  );
+}
+
+// ---------- every bill, in a side drawer (opened from "N more" on the Bills card) ----------
+export function BillsSheet({ hub, onSheet, onClose }) {
+  const m = hub.data.money;
+  const today = todayKey();
+  const catsById = Object.fromEntries(liveCategories(m).map((c) => [c.id, c]));
+  const bills = liveBills(m).sort((a, b) => a.next.localeCompare(b.next));
+  const monthly = bills.reduce((s, b) => s + monthlyCost(b, m), 0);
+
+  return (
+    <Sheet onClose={onClose} label="Bills" side>
+      <h2 className="sheet-heading m-bills-heading">Bills</h2>
+      <p className="m-sub">{bills.length} bill{bills.length === 1 ? '' : 's'}, {money(monthly)} a month</p>
+      {bills.length ? (
+        <BillRows list={bills} catsById={catsById} today={today} hub={hub} onOpen={(id) => onSheet({ type: 'bill', id })} />
+      ) : <p className="tile-empty">No bills yet</p>}
+      <div className="sheet-actions">
+        <button className="primary" onClick={() => onSheet({ type: 'bill' })}><Icon name="plus" size={18} />Add a bill</button>
         <button className="text-btn" onClick={onClose}>Close</button>
       </div>
     </Sheet>

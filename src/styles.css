@@ -343,6 +343,10 @@ input, select, textarea {
   border: 1px solid var(--rule-strong); border-radius: 8px;
 }
 textarea { resize: vertical; }
+/* Safari sizes date and time fields to their own content and ignores width: 100%,
+   which pushed sheets wider than the phone. Resetting the native look lets them fit. */
+input[type="date"], input[type="time"] { display: block; min-width: 0; -webkit-appearance: none; appearance: none; text-align: left; }
+input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value { text-align: left; }
 .hint { font-size: 0.9375rem; color: var(--ink-soft); font-style: italic; margin: 0; }
 .error { color: var(--danger); margin: 0; font-size: 0.9375rem; }
 
@@ -400,6 +404,7 @@ fieldset { border: 0; margin: 0; padding: 0; }
 legend { font-size: 0.9375rem; color: var(--ink-soft); margin-bottom: var(--s1); padding: 0; }
 .area-pick .filters { margin-bottom: 0; }
 .field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: var(--s3); }
+.field-grid > * { min-width: 0; }
 .sheet-actions { display: flex; align-items: center; gap: var(--s4); padding-top: var(--s2); }
 .push-right { margin-left: auto; }
 
@@ -469,7 +474,7 @@ legend { font-size: 0.9375rem; color: var(--ink-soft); margin-bottom: var(--s1);
   grid-column: 2; display: flex; flex-wrap: wrap; gap: var(--s1) var(--s3);
   font-size: var(--t-small); color: var(--ink-soft); font-style: italic;
 }
-.card-meta span { display: inline-flex; align-items: center; gap: 3px; }
+.card-meta span { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
 .card-meta .late { color: var(--danger); }
 .entry .card-meta { margin-top: 1px; }
 .drop-line {
@@ -492,9 +497,7 @@ legend { font-size: 0.9375rem; color: var(--ink-soft); margin-bottom: var(--s1);
 .inline-add-row > input { flex: 3 1 8em; min-width: 0; }
 .inline-add-row > .inline-add-price { flex: 1 1 5.5em; font-variant-numeric: tabular-nums; }
 .inline-add-date { position: relative; display: block; flex: 1 1 9em; min-width: 0; }
-/* Safari gives date boxes a fixed native width unless their appearance is reset. */
-.inline-add-date input { display: block; width: 100%; min-width: 0; -webkit-appearance: none; appearance: none; text-align: left; padding-right: var(--s2); }
-.inline-add-date input::-webkit-date-and-time-value { text-align: left; }
+.inline-add-date input { width: 100%; padding-right: var(--s2); }
 .inline-add-date input::-webkit-calendar-picker-indicator { margin-inline-start: 2px; }
 .inline-add-date[data-empty] input:not(:focus)::-webkit-datetime-edit { color: transparent; }
 .inline-add-date-label { position: absolute; left: calc(var(--s3) + 1px); top: 50%; transform: translateY(-50%); color: var(--ink-soft); pointer-events: none; }
@@ -554,6 +557,8 @@ textarea.title-input { resize: none; overflow: hidden; min-height: 0; line-heigh
   .sheet-actions { flex-wrap: wrap; }
 }
 body.sheet-open { overflow: hidden; }
+/* a sheet only ever scrolls up and down, never sideways */
+.sheet { overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; }
 .sheet > * { flex-shrink: 0; }
 .armed { font-weight: 600; }
 .confirm-mini { font-size: 0.8125rem; color: var(--danger); white-space: nowrap; padding: 0 4px; }
@@ -1584,13 +1589,24 @@ button.all-day-mark:hover { background: var(--surface); }
 .m-bill-list li { display: flex; align-items: center; gap: var(--s2); border-top: 1px solid var(--line); }
 .m-bill-list li:first-child { border-top: 0; }
 .m-bill { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--s3); padding: 9px 0; text-align: left; color: inherit; }
+.m-bill-list li { position: relative; }
+.m-bill::after { content: ''; position: absolute; inset: 0; } /* the whole row opens the bill */
+.m-bill-side { display: flex; align-items: center; gap: var(--s2); flex: none; pointer-events: none; }
+.m-bill-side .m-paid { position: relative; z-index: 1; pointer-events: auto; }
+/* narrow screens: the amount sits above Paid so the bill name has the width */
+@media (max-width: 480px) {
+  .m-bill-side { flex-direction: column; align-items: flex-end; gap: 4px; padding: 9px 0; }
+}
 .m-bill-list li[data-late] .m-due { color: var(--danger); font-weight: 600; }
 .m-bill-list li[data-today] .m-due { color: var(--ink); font-weight: 600; }
+/* "Mark paid" is an action, not a status, so it's an outlined button rather than a filled badge */
 .m-paid {
-  display: inline-flex; align-items: center; gap: 4px; flex: none; min-height: 32px; padding: 0 12px;
-  border-radius: var(--radius-pill); background: var(--pistachio-soft); color: var(--pistachio-ink); font-size: 0.8125rem; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 4px; flex: none; min-height: 32px; padding: 0 12px 0 9px;
+  border-radius: var(--radius-pill); background: transparent; color: var(--ink); font-size: 0.8125rem; font-weight: 600; white-space: nowrap;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
 }
-.m-paid:hover { background: var(--pistachio); color: var(--on-pistachio); }
+.m-paid svg { width: 14px; height: 14px; flex: none; }
+.m-paid:hover, .m-paid:focus-visible { background: var(--pistachio); color: var(--on-pistachio); box-shadow: none; }
 .m-card-foot { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; color: var(--ink-soft); font-size: 0.875rem; padding: 6px 0 0; }
 .m-card-foot:hover { color: var(--ink); }
 
@@ -2260,12 +2276,14 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
 .topbar { right: calc(var(--gutter) + env(safe-area-inset-right)); }
 @media (min-width: 900px) { .topbar { right: var(--gutter); } }
 .rail { padding-left: var(--gutter); padding-right: var(--gutter); }
-/* the floating menu bar fits small phones without touching the edges */
+/* the floating menu bar fits small phones without touching the edges. Each tab's size is worked
+   out from the screen width (what's left after 12px side margins, the Add button, gaps and the
+   dock's padding, split five ways), between 34px and 44px, so the circles stay round and centred. */
 @media (max-width: 400px) {
-  .rail { gap: 6px; }
+  .rail { left: 0; gap: 6px; padding-left: 12px; padding-right: 12px; }
   .rail .dock { gap: 2px; padding: 5px; }
-  .dock .tab { width: 44px; height: 44px; }
-  .add-btn { width: 54px; height: 54px; }
+  .dock .tab { --tab: clamp(34px, calc((100vw - 24px - 54px - 6px - 10px - 8px) / 5), 44px); width: var(--tab); height: var(--tab); }
+  .add-btn { flex: none; width: 54px; height: 54px; }
 }
 /* a little more room inside the quadrants and lists on phones */
 @media (max-width: 699px) {
@@ -2655,7 +2673,9 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
 
 /* ---------- "Add a task" / "Add an item": an outlined pill in the card's own ink, no fill ---------- */
 .matrix .quad .inline-add, .quad .inline-add, .tray > .inline-add {
-  align-self: flex-start; min-height: 40px; margin-top: var(--s2); padding: 0 16px 0 12px; gap: 6px;
+  align-self: flex-start; min-height: 32px; margin-top: var(--s2); padding: 0 12px 0 9px; gap: 4px;
+  font-size: 0.875rem; /* matches the task titles in the cards */
+  white-space: nowrap;
   border-radius: var(--radius-pill); color: inherit;
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, currentColor 30%, transparent);
   transition: box-shadow .15s ease;
@@ -2665,4 +2685,29 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, currentColor 70%, transparent);
 }
 .tray > .inline-add { color: var(--ink-soft); }
+.matrix .quad .inline-add svg, .quad .inline-add svg, .tray > .inline-add svg { width: 14px; height: 14px; flex: none; }
 @media (prefers-reduced-motion: reduce) { .quad .inline-add, .tray > .inline-add { transition: none; } }
+/* narrow cards: when the full label no longer fits, shorten it to "+ Add" */
+.quad { container-type: inline-size; }
+.inline-add-rest { white-space: pre; }
+@container (max-width: 112px) {
+  .quad .inline-add-rest { display: none; }
+}
+/* "2 more" under the Bills card's list; the rest open in the Bills drawer */
+.m-bill-more { align-self: flex-start; padding-left: 0; }
+/* the Bills drawer's title, at page-title scale */
+.m-bills-heading { font-size: var(--t-h1); line-height: 1.1; }
+.m-bills-head { width: 100%; text-align: left; color: inherit; min-height: 44px; margin: -10px 0 -8px; align-items: center; border-radius: var(--radius-sm); }
+.m-bills-head:hover .m-stack-title { text-decoration: underline; text-underline-offset: 3px; }
+.m-bills-head:hover .m-stack-title svg { opacity: 1; transform: translate(1px, -1px); }
+/* phones: the quadrant header ("Do ↗") is one wide tap target that opens it full screen */
+.quad-open { display: inline-flex; opacity: .55; transition: transform 120ms, opacity 120ms; }
+.quad-title:not(:disabled) { width: 100%; min-height: 44px; }
+.quad-title:not(:disabled):hover .quad-open { opacity: 1; transform: translate(1px, -1px); }
+.matrix .quad-cell .quad-title .quad-open { margin-left: -6px; } /* 4px after the name, not the header's 10px gap */
+/* desktop: the To sort picker floats under the grid button while the mouse is over it */
+.tray li { position: relative; }
+.row-picker-pop {
+  position: absolute; right: 0; top: calc(100% - 6px); z-index: 5; width: 17rem; padding: 8px;
+  background: var(--surface); border-radius: var(--radius-md); box-shadow: 0 0 0 1px var(--line), var(--shadow-lift);
+}

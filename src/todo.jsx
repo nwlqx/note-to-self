@@ -43,6 +43,8 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
   const [focus, setFocus] = useState(null); // a quadrant opened full width on phones
   const [showAllTray, setShowAllTray] = useState(false);
   const [sorting, setSorting] = useState(null); // tray item whose picker is open
+  // With a mouse on a wide screen the picker opens on hover, floating over the list instead of pushing rows down.
+  const hoverSort = useWide('(min-width: 900px) and (hover: hover) and (pointer: fine)');
   // Show one project's tasks at a time: '' = all, 'none' = tasks outside projects.
   const [proj, setProjState] = useState(() => { try { return localStorage.getItem('hub.todoProject') || ''; } catch { return ''; } });
   const setProj = (v) => { setProjState(v); try { localStorage.setItem('hub.todoProject', v); } catch { /* ignore */ } };
@@ -107,7 +109,7 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
     return (
       <React.Fragment key={c.id}>
         {lineBefore && <li className="drop-line" style={{ height: drag.h }} />}
-        <li hidden={dragging || undefined}>
+        <li hidden={dragging || undefined} onMouseLeave={zone === 'tray' && hoverSort ? () => setSorting((s) => (s === c.id ? null : s)) : undefined}>
           <div className="todo-row" data-drag-id={c.done ? undefined : c.id} data-done={c.done || undefined} style={areaStyle(area)}
             onPointerDown={(e) => !c.done && onPointerDown(e, { id: c.id, title: c.title, zone, mark: cardGlyph(c) })}
             onContextMenu={(e) => e.preventDefault()}>
@@ -131,13 +133,14 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
             )}
             {zone === 'tray' && (
               <button className="icon-btn no-drag sort-btn" aria-expanded={sorting === c.id} aria-label={`Sort "${c.title}" into a quadrant`}
-                onClick={() => setSorting(sorting === c.id ? null : c.id)}>
+                onMouseEnter={hoverSort ? () => setSorting(c.id) : undefined}
+                onClick={() => setSorting(hoverSort ? c.id : sorting === c.id ? null : c.id)}>
                 <Icon name="grid" size={18} />
               </button>
             )}
           </div>
           {sorting === c.id && (
-            <div className="row-picker">
+            <div className={`row-picker${hoverSort ? ' row-picker-pop' : ''}`}>
               <QuadPicker compact onPick={(q) => { place(c.id, q); setSorting(null); }} />
             </div>
           )}
@@ -157,7 +160,9 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
         <header className="quad-head">
           <button className="quad-title" id={`q-${q.id}`} onClick={() => !wide && setFocus(focus === q.id ? null : q.id)} disabled={wide}>
             <span className="quad-name">{q.name}</span>
-            <span className="sr-only">, {list.length}</span>
+            <span className="sr-only">, {list.length}{!wide && focus !== q.id ? ', open full screen' : ''}</span>
+            {/* on phones the header opens the quadrant full screen; the arrow says so */}
+            {!wide && focus !== q.id && <span className="quad-open" aria-hidden="true"><Icon name="arrow" size={14} /></span>}
           </button>
           <span className="quad-hint">{q.hint}</span>
         </header>
@@ -190,7 +195,7 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
       <div className="todo-layout">
         {focus && !wide ? (
           <div className="quad-focus">
-            <button className="back" onClick={() => setFocus(null)}><Icon name="left" size={18} />All four</button>
+            <button className="back" onClick={() => setFocus(null)}><Icon name="left" size={18} />Back</button>
             {renderQuadrant(QUADRANTS.find((q) => q.id === focus))}
           </div>
         ) : (

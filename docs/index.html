@@ -2669,6 +2669,20 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
 @media (max-width: 640px) { .overdue-list { grid-template-columns: 1fr; } }
 /* Overdue band lines up with the two-week strip below it, which bleeds 16px into the side margins on narrower screens */
 @media (max-width: 899px) { .due-strip-wrap > .strip-overdue { margin-inline: -16px; } }
+
+/* ---------- "Add a task" / "Add an item": an outlined pill in the card's own ink, no fill ---------- */
+.matrix .quad .inline-add, .quad .inline-add, .tray > .inline-add {
+  align-self: flex-start; min-height: 40px; margin-top: var(--s2); padding: 0 16px 0 12px; gap: 6px;
+  border-radius: var(--radius-pill); color: inherit;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, currentColor 30%, transparent);
+  transition: box-shadow .15s ease;
+}
+.matrix .quad .inline-add:hover, .quad .inline-add:hover, .tray > .inline-add:hover,
+.matrix .quad .inline-add:focus-visible, .quad .inline-add:focus-visible, .tray > .inline-add:focus-visible {
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, currentColor 70%, transparent);
+}
+.tray > .inline-add { color: var(--ink-soft); }
+@media (prefers-reduced-motion: reduce) { .quad .inline-add, .tray > .inline-add { transition: none; } }
 </style>
 </head>
 <body>

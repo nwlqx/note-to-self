@@ -486,11 +486,19 @@ legend { font-size: 0.9375rem; color: var(--ink-soft); margin-bottom: var(--s1);
 .inline-add:hover { color: var(--ink); }
 .inline-add-form { padding-top: var(--s2); display: flex; flex-direction: column; gap: var(--s1); }
 .inline-add-form .hint { font-size: var(--t-small); }
+/* Name and price or date share a line when there's room; on a narrow card the second box
+   drops underneath and takes the full width (the name grows 3x faster, so it stays the wider one). */
 .inline-add-row { display: flex; flex-wrap: wrap; gap: var(--s2); }
-.inline-add-row > input { flex: 1 1 8em; min-width: 0; }
-.inline-add-row > .inline-add-price { flex: 0 0 5.5em; text-align: right; font-variant-numeric: tabular-nums; }
-.inline-add-row > .inline-add-date { flex: 0 0 auto; width: auto; }
-.inline-add-date[data-empty] { color: var(--ink-soft); }
+.inline-add-row > input { flex: 3 1 8em; min-width: 0; }
+.inline-add-row > .inline-add-price { flex: 1 1 5.5em; font-variant-numeric: tabular-nums; }
+.inline-add-date { position: relative; display: block; flex: 1 1 9em; min-width: 0; }
+/* Safari gives date boxes a fixed native width unless their appearance is reset. */
+.inline-add-date input { display: block; width: 100%; min-width: 0; -webkit-appearance: none; appearance: none; text-align: left; padding-right: var(--s2); }
+.inline-add-date input::-webkit-date-and-time-value { text-align: left; }
+.inline-add-date input::-webkit-calendar-picker-indicator { margin-inline-start: 2px; }
+.inline-add-date[data-empty] input:not(:focus)::-webkit-datetime-edit { color: transparent; }
+.inline-add-date-label { position: absolute; left: calc(var(--s3) + 1px); top: 50%; transform: translateY(-50%); color: var(--ink-soft); pointer-events: none; }
+.inline-add-date input:focus + .inline-add-date-label { display: none; }
 
 .list-layout { max-width: 44rem; }
 .list-section { margin-bottom: var(--s5); }

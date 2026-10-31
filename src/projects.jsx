@@ -213,8 +213,11 @@ export function InlineAdd({ onAdd, label = 'Add card', placeholder = 'Card title
             onChange={(e) => setSecond(e.target.value.replace(/[^\d.,]/g, '').replace(/,/g, ''))} onKeyDown={onKeyDown} />
         )}
         {extra === 'date' && (
-          <input className="inline-add-date" type="date" value={second} aria-label="Due date (optional)"
-            data-empty={second ? undefined : ''} onChange={(e) => setSecond(e.target.value)} onKeyDown={onKeyDown} />
+          // Safari shows an empty date box as blank, so the label is drawn over it until a date is picked.
+          <span className="inline-add-date" data-empty={second ? undefined : ''}>
+            <input type="date" value={second} aria-label="Due date (optional)" onChange={(e) => setSecond(e.target.value)} onKeyDown={onKeyDown} />
+            {!second && <span className="inline-add-date-label" aria-hidden="true">Due date</span>}
+          </span>
         )}
       </div>
       <p className="hint key-hint">Enter to add another, Esc when done</p>

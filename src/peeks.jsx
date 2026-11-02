@@ -36,14 +36,17 @@ export function HoverPeek({ label, children, render }) {
 function Row({ style, icon, name, meta, end, onClick, current }) {
   return (
     <li style={style}>
-      <button className="peek-row peek-row-plain" aria-current={current ? 'page' : undefined} onClick={onClick}>
+      {/* rows with nothing to open (Google Calendar events) aren't buttons */}
+      {React.createElement(onClick ? 'button' : 'div', {
+        className: `peek-row peek-row-plain${onClick ? '' : ' is-static'}`, 'aria-current': current ? 'page' : undefined, onClick,
+      }, <>
         <span className="peek-icon">{icon}</span>
         <span className="peek-text">
           <span className="peek-name">{name}</span>
           {meta && <span className="peek-meta">{meta}</span>}
         </span>
         {end != null && <span className="peek-end">{end}</span>}
-      </button>
+      </>)}
     </li>
   );
 }
@@ -86,7 +89,7 @@ export function TodoPeek({ items, entries, projects, areasById, onOpenCard, onOp
             {rows.slice(0, 6).map(({ key, e, meta }) => (
               <Row key={key} style={entryStyle(e, projectsById, areasById)} icon={entryIcon(e, projectsById)} name={e.title}
                 meta={<span className={meta.startsWith('Overdue') ? 'peek-late' : undefined}>{meta}</span>}
-                onClick={() => { close(); if (e.source === 'item') onOpenCard(e.item.id); else onOpenEntry(e); }} />
+                onClick={e.source === 'calendar' ? undefined : () => { close(); if (e.source === 'item') onOpenCard(e.item.id); else onOpenEntry(e); }} />
             ))}
           </ul>
         ) : <p className="peek-empty">Nothing due today. Nice.</p>}
@@ -110,7 +113,7 @@ export function CalendarPeek({ entries, projects, areasById, onOpenEntry, onAll,
             {events.slice(0, 6).map((e) => (
               <Row key={e.key} style={entryStyle(e, projectsById, areasById)} icon={entryIcon(e, projectsById)} name={e.title}
                 meta={e.time ? time12(e.time) : e.endDate ? `Until ${shortDate(e.endDate)}` : 'All day'}
-                onClick={() => { close(); onOpenEntry(e); }} />
+                onClick={e.source === 'calendar' ? undefined : () => { close(); onOpenEntry(e); }} />
             ))}
           </ul>
         ) : <p className="peek-empty">Nothing on today</p>}

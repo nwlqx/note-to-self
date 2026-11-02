@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { todayKey, addDays, startOfWeek, parseKey, dateKey, sortEntries, covers, isOpenTask } from './model.js';
 import { WeekView, assignLanes } from './views.jsx';
-import { Icon, EntryRow, metaFor, areaColor, areaStyle, longDate, time12, shortDate, rangeLabel, ProjectIcon, entryGlyph } from './ui.jsx';
+import { Icon, EntryRow, Opener, metaFor, areaColor, areaStyle, longDate, time12, shortDate, rangeLabel, ProjectIcon, entryGlyph } from './ui.jsx';
 import { useWide } from './todo.jsx';
 
 const glyph = (e) => entryGlyph(e);
@@ -139,10 +139,10 @@ function DayView({ entries, areasById, onToggle, onOpen, onNewAt, draft, head, d
                 <button className="all-day-mark" onClick={() => onToggle(e.item.id)}
                   aria-label={e.done ? `Mark "${e.title}" not done` : `Mark "${e.title}" done`} aria-pressed={e.done}>{glyph(e)}</button>
               ) : <span className="all-day-mark" aria-hidden="true">{glyph(e)}</span>}
-              <button className="all-day-body" onClick={() => onOpen(e)}>
+              <Opener entry={e} onOpen={onOpen} className="all-day-body">
                 {e.title}
                 <span className="all-day-meta">{e.source === 'bill' ? `${e.cost} due` : e.endDate ? rangeLabel(e.date, e.endDate) : e.kind === 'deadline' ? 'Due today' : e.project || 'All day'}</span>
-              </button>
+              </Opener>
             </li>
           ))}
         </ul>
@@ -162,12 +162,11 @@ function DayView({ entries, areasById, onToggle, onOpen, onNewAt, draft, head, d
           {timed.map((t) => {
             const short = t.end - t.start < 50;
             return (
-              <button key={t.e.key} className="slot" data-short={short || undefined}
-                style={areaStyle(areasById[t.e.area], { top: y(t.start) + 2, height: Math.max(30, y(t.end) - y(t.start) - 4), left: `calc(${(t.lane / t.lanes) * 100}% + 2px)`, width: `calc(${100 / t.lanes}% - 4px)` })}
-                onClick={() => onOpen(t.e)}>
+              <Opener key={t.e.key} entry={t.e} onOpen={onOpen} className="slot" data-short={short || undefined}
+                style={areaStyle(areasById[t.e.area], { top: y(t.start) + 2, height: Math.max(30, y(t.end) - y(t.start) - 4), left: `calc(${(t.lane / t.lanes) * 100}% + 2px)`, width: `calc(${100 / t.lanes}% - 4px)` })}>
                 <span className="slot-title">{t.e.title}</span>
                 <span className="slot-time">{fmtMin(t.start)}–{fmtMin(t.end)}</span>
-              </button>
+              </Opener>
             );
           })}
           {showDraft && (
@@ -249,10 +248,10 @@ function MonthView({ entries, areasById, onToggle, onOpen, head, month, setMonth
                       {list.slice(0, maxInCell).map((e) => (
                         <li key={e.key} style={areaStyle(areasById[e.area])} data-done={e.done || undefined} data-kind={e.kind}>
                           {wide ? (
-                            <button className="cell-entry" onClick={() => onOpen(e)}>
+                            <Opener entry={e} onOpen={onOpen} className="cell-entry">
                               <span className="cell-mark" aria-hidden="true">{glyph(e)}</span>
                               <span className="cell-title">{e.time ? `${time12(e.time)} ` : ''}{e.title}</span>
-                            </button>
+                            </Opener>
                           ) : (
                             <span className="cell-dot" aria-hidden="true">{glyph(e)}</span>
                           )}
@@ -271,12 +270,12 @@ function MonthView({ entries, areasById, onToggle, onOpen, head, month, setMonth
                 const s = Math.max(0, Math.round((parseKey(r.date) - parseKey(w)) / 864e5));
                 const e = Math.min(6, Math.round((parseKey(r.endDate) - parseKey(w)) / 864e5));
                 return (
-                  <button key={r.key} className="month-bar" onClick={() => onOpen(r)}
+                  <Opener key={r.key} entry={r} onOpen={onOpen} className="month-bar"
                     data-starts={r.date >= w || undefined} data-ends={r.endDate <= end || undefined}
                     style={areaStyle(areasById[r.area], { '--s': s, '--e': e, '--lane': lane.get(r.key) })}
                     aria-label={`${r.title}, ${shortDate(r.date)} to ${shortDate(r.endDate)}`}>
                     {wide && <span>{r.date >= w || s === 0 ? r.title : ''}</span>}
-                  </button>
+                  </Opener>
                 );
               })}
             </div>

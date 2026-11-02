@@ -48,6 +48,7 @@ export function Icon({ name, size = 20 }) {
     right: 'M9 5l7 7-7 7',
     plus: 'M12 5v14M5 12h14',
     close: 'M6 6l12 12M18 6L6 18',
+    cake: 'M4.5 20h15M5.5 20v-6.5h13V20M5.5 16.5c1.6 0 1.6-1.2 3.2-1.2s1.6 1.2 3.3 1.2 1.6-1.2 3.3-1.2 1.6 1.2 3.2 1.2M8.5 13.5v-3M12 13.5v-3M15.5 13.5v-3M8.5 7.5v.5M12 7.5v.5M15.5 7.5v.5',
     up: 'M6 15l6-6 6 6',
     down: 'M6 9l6 6 6-6',
     more: 'M5 12h.01M12 12h.01M19 12h.01',
@@ -109,6 +110,12 @@ export function entryGlyph(e, size = 13) {
   if (!e.done && e.source === 'item' && e.projectIcon) {
     return <span className="glyph-icon" title={e.project}><Icon name={e.projectIcon} size={size} /></span>;
   }
+  // Synced Google Calendar events are solid dots in their calendar's colour (birthdays get a cake);
+  // events made in the app keep the outline circle.
+  if (e.source === 'calendar') {
+    if (/birthday|\bb'?day\b/i.test(e.title || '')) return <span className="glyph-icon glyph-cake" title="Birthday"><Icon name="cake" size={size} /></span>;
+    return '●';
+  }
   return e.done ? '×' : e.source === 'bill' ? '$' : e.kind === 'event' ? '○' : '•';
 }
 
@@ -130,15 +137,23 @@ export function Mark({ entry, onToggle }) {
   );
 }
 
+// Google Calendar events are read-only here (edit them in Google), so they have nothing to open:
+// they render as plain rows, everything else as a button that opens it.
+export const canOpen = (entry) => entry.source !== 'calendar';
+export function Opener({ entry, onOpen, className, children, ...rest }) {
+  if (!canOpen(entry)) return <div className={`${className} is-static`} {...rest}>{children}</div>;
+  return <button className={className} onClick={() => onOpen(entry)} {...rest}>{children}</button>;
+}
+
 export function EntryRow({ entry, areasById, onToggle, onOpen, meta }) {
   const area = areasById[entry.area];
   return (
     <li className="entry" data-done={entry.done || undefined} data-kind={entry.kind} style={areaStyle(area)}>
       <Mark entry={entry} onToggle={onToggle} />
-      <button className="entry-body" onClick={() => onOpen(entry)}>
+      <Opener entry={entry} onOpen={onOpen} className="entry-body">
         <span className="entry-title">{entry.title}</span>
         {meta && <span className="entry-meta">{meta}</span>}
-      </button>
+      </Opener>
     </li>
   );
 }
@@ -146,12 +161,20 @@ export function EntryRow({ entry, areasById, onToggle, onOpen, meta }) {
 export function metaFor(entry, { showDate = false, showArea = false, showProject = true, areasById = {} } = {}) {
   const bits = [];
   if (showDate && entry.date) bits.push(entry.endDate ? rangeLabel(entry.date, entry.endDate) : shortDate(entry.date));
-  if (entry.time) bits.push(time12(entry.time));
+  if (entry.source === 'calendar' && entry.ev && !entry.ev.allDay && entry.time) {
+    // the event drawer is gone, so the row carries what it used to show: the end time too
+    const end = new Date(entry.ev.end);
+    const endT = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
+    bits.push(endT > entry.time ? `${time12(entry.time)}–${time12(endT)}` : time12(entry.time));
+  } else if (entry.time) bits.push(time12(entry.time));
   if (entry.source === 'bill') bits.push(`${entry.cost} bill`);
   else if (entry.kind === 'deadline') bits.push('due');
   if (showArea && areasById[entry.area]) bits.push(areasById[entry.area].name);
   if (showProject && entry.project) bits.push(entry.project);
-  if (entry.source === 'calendar') bits.push('calendar');
+  if (entry.source === 'calendar') {
+    if (entry.calendar) bits.push(`${entry.calendar[0].toUpperCase()}${entry.calendar.slice(1)} calendar`);
+    if (entry.notes) bits.push(entry.notes); // the event's location
+  }
   return bits.join(', ');
 }
 

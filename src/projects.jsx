@@ -117,6 +117,7 @@ const loadLayout = (id) => { try { return localStorage.getItem(layoutKey(id)) ||
 
 export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEditProject, onOpenSpending }) {
   const [layout, setLayoutState] = useState(() => loadLayout(project.id));
+  const [newList, setNewList] = useState(0); // bumped by "+ Checklist" to open a new checklist below
   const setLayout = (l) => { setLayoutState(l); try { localStorage.setItem(layoutKey(project.id), l); } catch { /* ignore */ } };
   const area = areasById[project.area];
   const cards = cardsOf(hub.data.items.items, project.id);
@@ -153,6 +154,8 @@ export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEdi
               <button role="radio" aria-checked={layout === 'board'} onClick={() => setLayout('board')}><Icon name="board" size={16} />Board</button>
               <button role="radio" aria-checked={layout === 'list'} onClick={() => setLayout('list')}><Icon name="list" size={16} />List</button>
             </div>
+            {/* checklists (packing, documents) aren't tasks, so they get their own way in, next to the layout */}
+            <button className="text-btn small proj-new-list" onClick={() => setNewList((n) => n + 1)}><Icon name="plus" size={14} />Checklist</button>
             <button className="icon-btn" onClick={onEditProject} aria-label="Project settings"><Icon name="more" /></button>
           </div>
         </div>
@@ -166,7 +169,7 @@ export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEdi
             <ListLayout hub={hub} project={project} bySection={bySection} area={area} onOpenCard={onOpenCard} onAdd={addCard} />
           )}
         </div>
-        <ProjectLists hub={hub} project={project} onOpenCard={onOpenCard} />
+        <ProjectLists hub={hub} project={project} onOpenCard={onOpenCard} openNew={newList} />
       </div>
     </section>
   );

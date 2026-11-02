@@ -306,20 +306,4 @@ function Attachment({ hub, card, att }) {
   );
 }
 
-export function CalendarSheet({ entry, onClose }) {
-  const ev = entry.ev;
-  const when = ev.allDay
-    ? rangeLabel(ev.start, ev.end)
-    : `${longDate(entry.date)}, ${time12(entry.time)} to ${new Date(ev.end).toLocaleTimeString('en-SG', { hour: 'numeric', minute: '2-digit' }).replace(' ', '').toLowerCase()}`;
-  return (
-    <Sheet onClose={onClose} label={ev.title}>
-      <h2 className="sheet-heading">{ev.title}</h2>
-      <p>{when}</p>
-      {ev.location && <p className="hint">{ev.location}</p>}
-      <p className="hint">From your {entry.calendar} calendar. Edit it in Google Calendar and it updates here within the hour.</p>
-      <div className="sheet-actions"><button className="primary" onClick={onClose}>Close</button></div>
-    </Sheet>
-  );
-}
-
 export const colorFor = areaColor;

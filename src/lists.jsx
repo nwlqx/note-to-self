@@ -9,11 +9,18 @@ import { DragGhost } from './projects.jsx';
 const COLLAPSE_KEY = 'hub.listsCollapsed';
 const loadCollapsed = () => { try { return JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '{}'); } catch { return {}; } };
 
-export function ProjectLists({ hub, project, onOpenCard }) {
+export function ProjectLists({ hub, project, onOpenCard, openNew = 0 }) {
   const lists = listsOf(hub.data.settings, project.id);
   const [collapsed, setCollapsedState] = useState(loadCollapsed);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
+  const sectionRef = useRef(null);
+  // "+ Checklist" at the top of the project opens the name box here and brings it into view.
+  useEffect(() => {
+    if (!openNew) return;
+    setAdding(true);
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [openNew]);
   const setCollapsed = (id, v) => {
     const next = { ...collapsed, [id]: v };
     setCollapsedState(next);
@@ -53,14 +60,14 @@ export function ProjectLists({ hub, project, onOpenCard }) {
   };
 
   return (
-    <section className="plists" aria-labelledby={`plists-${project.id}`}>
+    <section className="plists" ref={sectionRef} aria-labelledby={`plists-${project.id}`}>
       <div className="plists-head">
-        <h2 id={`plists-${project.id}`} className="plists-title"><span className="hl-text">Lists</span></h2>
-        {!adding && <button className="text-btn small" onClick={() => setAdding(true)}><Icon name="plus" size={14} />New list</button>}
+        <h2 id={`plists-${project.id}`} className="plists-title"><span className="hl-text">Checklists</span></h2>
+        {!adding && <button className="text-btn small" onClick={() => setAdding(true)}><Icon name="plus" size={14} />New checklist</button>}
       </div>
       {adding && (
         <div className="plist-new">
-          <input autoFocus value={newName} placeholder="List name, e.g. Packing" aria-label="New list name"
+          <input autoFocus value={newName} placeholder="Checklist name, e.g. Packing" aria-label="New checklist name"
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); createList(); } if (e.key === 'Escape') { setAdding(false); setNewName(''); } }}
             onBlur={createList} />

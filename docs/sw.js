@@ -1,6 +1,6 @@
 // Keeps the app and its typeface available offline. Your data is never cached
 // here: it lives in the app's own storage and syncs with GitHub directly.
-const CACHE = 'plans-8fb9519bc4';
+const CACHE = 'plans-f894d334cd';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './apple-touch-icon.png', './fonts/dm-sans.woff2', './fonts/dm-sans-italic.woff2', './fonts/instrument-serif-normal.woff2', './fonts/instrument-serif-italic.woff2', './fonts/caveat.woff2'];
 
 self.addEventListener('install', (e) => {

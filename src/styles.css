@@ -2726,3 +2726,12 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
 }
 .project-next-date[data-late] { color: var(--danger); }
 .project-next-title { font-weight: 500; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+/* Google Calendar events: plain rows and blocks with nothing to open, so no pointer or hover */
+.is-static { cursor: default; }
+.entry-body.is-static:hover .entry-title { text-decoration: none; }
+.cell-entry.is-static:hover { background: none; }
+.slot.is-static:hover { filter: none; }
+.peek-row.is-static:hover { background: none; }
+.proj-new-list { white-space: nowrap; }
+.project-tools { flex-wrap: wrap; }
+.plists { scroll-margin-top: 80px; } /* clear of the top bar when "+ Checklist" scrolls here */

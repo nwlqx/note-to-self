@@ -5,7 +5,7 @@ import { Icon, useTheme, projectStyle, ProjectIcon } from './ui.jsx';
 import { Connect, Setup, SettingsView, calendarsOf } from './views.jsx';
 import { CalendarPage } from './calendar.jsx';
 import { ProjectsOverview, ProjectView, ProjectSheet } from './projects.jsx';
-import { CardSheet, CalendarSheet } from './card.jsx';
+import { CardSheet } from './card.jsx';
 import { TodoView } from './todo.jsx';
 import { MoneyPage, ExpenseSheet, BillSheet, BudgetsSheet, CurrenciesSheet, SpendingSheet, CategorySheet, BillsSheet } from './moneyview.jsx';
 import { BuySheet } from './buyview.jsx';
@@ -157,10 +157,10 @@ export default function App() {
     );
   }
 
-  const openEntry = (entry) => setSheet(
-    entry.source === 'calendar' ? { type: 'calendar', entry }
-      : entry.source === 'bill' ? { type: 'bill', id: entry.bill.id }
-        : { type: 'card', cardId: entry.item.id },
+  // Google Calendar events have nothing to open (they're edited in Google), so they're skipped.
+  const openEntry = (entry) => entry.source !== 'calendar' && setSheet(
+    entry.source === 'bill' ? { type: 'bill', id: entry.bill.id }
+      : { type: 'card', cardId: entry.item.id },
   );
   // Sheets opened from another sheet (an expense from a project's spending) return to it when closed.
   const openSheet = (next) => setSheet((cur) => (cur && (cur.type === 'spending' || cur.type === 'category' || cur.type === 'bills') ? { ...next, back: cur } : next));
@@ -278,7 +278,6 @@ export default function App() {
         <CardSheet key={sheet.cardId || 'new'} hub={hub} cardId={sheet.cardId} defaults={sheet.defaults}
           areas={activeAreas} projects={projects} onClose={() => setSheet(null)} />
       )}
-      {sheet?.type === 'calendar' && <CalendarSheet entry={sheet.entry} onClose={() => setSheet(null)} />}
       {sheet?.type === 'expense' && (
         <ExpenseSheet key={sheet.id || 'new-x'} hub={hub} id={sheet.id} defaults={sheet.defaults} projects={projects} areasById={areasById} onClose={closeSheet} />
       )}

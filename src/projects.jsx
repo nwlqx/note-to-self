@@ -87,9 +87,7 @@ function ProjectRow({ project, cards, listItems = [], onOpen, area }) {
   const total = cards.length + listItems.length;
   const done = cards.filter((c) => c.done).length + listItems.filter((i) => i.done).length;
   const next = cards.filter((c) => !c.done && c.date).sort((a, b) => a.date.localeCompare(b.date))[0];
-  const meta = [];
-  meta.push(total ? `${done} of ${total} done` : 'Nothing added yet');
-  if (next) meta.push(`Next: ${next.title}, ${shortDate(next.date)}`);
+  const late = next && next.date < todayKey();
   return (
     <li style={projectStyle(project, area)}>
       <button className="project-row" onClick={onOpen}>
@@ -97,7 +95,14 @@ function ProjectRow({ project, cards, listItems = [], onOpen, area }) {
           <span className="project-name"><ProjectIcon project={project} size={24} /><span className="project-name-text">{project.name}</span></span>
           <span className="tile-arrow" aria-hidden="true"><Icon name="arrow" size={18} /></span>
         </span>
-        <span className="entry-meta">{meta.join('. ')}</span>
+        <span className="entry-meta">{total ? `${done} of ${total} done` : 'Nothing added yet'}</span>
+        {/* the next dated card, on its own line: date pill first, then what it is */}
+        {next && (
+          <span className="project-next">
+            <span className="project-next-date" data-late={late || undefined}>{late ? 'Overdue, ' : ''}{shortDate(next.date)}</span>
+            <span className="project-next-title"><span className="sr-only">Next: </span>{next.title}</span>
+          </span>
+        )}
         {total > 0 && (
           <span className="progress" aria-hidden="true"><span style={{ width: `${(done / total) * 100}%` }} /></span>
         )}
@@ -301,7 +306,7 @@ function Board({ hub, project, bySection, onOpenCard, onAdd }) {
         </div>
       </div>
       <DragGhost drag={drag} />
-      <p className="hint board-hint">Drag cards between sections. On a phone, press and hold a card first.</p>
+      <p className="hint board-hint">Drag cards between sections.</p>
     </>
   );
 }

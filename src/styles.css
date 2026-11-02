@@ -1958,7 +1958,7 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
 .to-buy .buy-log { flex: none; align-self: center; margin-right: 4px; }
 .to-buy .buy-hint { margin-top: var(--s3); }
 .buy-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.buy-picker button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border-radius: var(--radius-md, 12px); text-align: left; min-height: 0; }
+.buy-picker button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 10px 12px; border-radius: var(--radius-md, 12px); text-align: center; min-height: 0; } /* both lines centred in the pill */
 .buy-picker button strong { font-weight: 600; font-size: 0.9375rem; }
 .buy-picker button small { font-size: 0.8125rem; opacity: .85; }
 .buy-picker button[aria-checked="true"] { box-shadow: inset 0 0 0 2px currentColor; }
@@ -2718,3 +2718,11 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
 .gcal-add { align-self: flex-start; text-decoration: none; }
 .gcal-add svg { flex: none; }
 .cal-toggles { margin: calc(-1 * var(--s3)) 0 var(--s4); }
+/* project cards: "Next" sits on its own line under the progress count, date pill first */
+.project-next { display: flex; align-items: baseline; gap: 8px; min-width: 0; color: inherit; }
+.project-next-date {
+  flex: none; padding: 2px 9px; border-radius: var(--radius-pill); font-size: 0.8125rem; font-weight: 600;
+  background: color-mix(in srgb, currentColor 12%, transparent); white-space: nowrap;
+}
+.project-next-date[data-late] { color: var(--danger); }
+.project-next-title { font-weight: 500; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }

@@ -67,7 +67,7 @@ export function ProjectLists({ hub, project, onOpenCard }) {
         </div>
       )}
       {!lists.length && !adding && (
-        <p className="plists-empty">Keep simple checklists here, like packing or documents to bring. Items can become cards when they need a date.</p>
+        <p className="plists-empty">Keep simple checklists here, like packing or documents to bring.</p>
       )}
       {lists.map((l) => (
         <ListBlock key={l.id} hub={hub} list={l} collapsed={!!collapsed[l.id]} onCollapse={(v) => setCollapsed(l.id, v)}

@@ -105,6 +105,31 @@ export function ExpenseRows({ list, catsById, projectsById, onOpen, showDate = f
   );
 }
 
+// Spending grouped by day, newest first, each day with its total. Used by every spending drawer.
+function ExpenseDays({ list, catsById, projectsById, onOpen, showCat = true, showProject = true, empty }) {
+  const today = todayKey();
+  const days = [];
+  for (const x of list) {
+    if (!days.length || days[days.length - 1].date !== x.date) days.push({ date: x.date, list: [] });
+    days[days.length - 1].list.push(x);
+  }
+  // Older days outside this year show the year too.
+  const label = (d) => (d === today ? 'Today' : d === addDays(today, -1) ? 'Yesterday' : d.slice(0, 4) === today.slice(0, 4) ? dayDate(d) : `${dayDate(d)} ${d.slice(0, 4)}`);
+  return (
+    <div className="m-drawer-list">
+      {days.length ? days.map((d) => (
+        <div key={d.date} className="m-day">
+          <h3 className="m-day-head">
+            <span>{label(d.date)}</span>
+            <span>{money(d.list.reduce((s, x) => s + sgdOf(x), 0))}</span>
+          </h3>
+          <ExpenseRows list={d.list} catsById={catsById} projectsById={projectsById} showCat={showCat} showProject={showProject} onOpen={onOpen} />
+        </div>
+      )) : <p className="tile-empty">{empty}</p>}
+    </div>
+  );
+}
+
 // The month as one bar split by category, like the macOS storage bar: spent slices,
 // then what's left of the budget in grey, with a legend underneath.
 function StackBar({ rows, total, budget, label, onPick, onAll }) {
@@ -602,20 +627,28 @@ export function SpendingSheet({ hub, projectId, projects, areasById, onSheet, on
   if (!p) return null;
   const cats = liveCategories(m);
   const catsById = Object.fromEntries(cats.map((c) => [c.id, c]));
-  const list = liveExpenses(m).filter((x) => x.projectId === projectId).sort((a, b) => b.date.localeCompare(a.date));
+  const list = liveExpenses(m).filter((x) => x.projectId === projectId).sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   const spent = list.reduce((s, x) => s + sgdOf(x), 0);
   const byCat = {};
   for (const x of list) byCat[x.category] = (byCat[x.category] || 0) + sgdOf(x);
   const bills = liveBills(m).filter((b) => b.projectId === projectId);
 
+  // Same layout as a category's drawer: name and close at the top, the total, then spending by day.
   return (
     <Sheet onClose={onClose} label={`${p.name} spending`} side>
-      <div style={projectStyle(p, areasById[p.area])}>
-        <p className="project-area"><ProjectIcon project={p} size={16} />{p.name}</p>
+      <div className="m-drawer-head" style={projectStyle(p, areasById[p.area])}>
+        <div className="m-drawer-top">
+          <p className="project-area"><ProjectIcon project={p} size={16} />{p.name}</p>
+          <button className="icon-btn" aria-label="Close" onClick={onClose}><Icon name="close" /></button>
+        </div>
         <h2 className="sheet-heading">Spending</h2>
         <p className="m-big small">{money(spent)}{p.budget ? <span className="m-of"> of {money(p.budget)}</span> : null}</p>
         {p.budget ? <Bar spent={spent} budget={p.budget} label={`${money(spent)} of ${money(p.budget)}`} /> : null}
-        <p className="m-sub">{p.budget ? (spent > p.budget ? <strong className="m-over">{money(spent - p.budget)} over budget</strong> : `${money(p.budget - spent)} left`) : 'Set a budget in project settings to track against it.'}</p>
+        <p className="m-sub">
+          {p.budget
+            ? (spent > p.budget ? <strong className="m-over">{money(spent - p.budget)} over budget</strong> : <><strong>{money(p.budget - spent)}</strong> left</>)
+            : 'Set a budget in project settings to track against it.'}
+        </p>
       </div>
       {Object.keys(byCat).length > 1 && (
         <ul className="m-split" aria-label="By category">
@@ -626,13 +659,11 @@ export function SpendingSheet({ hub, projectId, projects, areasById, onSheet, on
           ))}
         </ul>
       )}
-      {list.length ? (
-        <ExpenseRows list={list} catsById={catsById} projectsById={{}} showDate showProject={false} onOpen={(id) => onSheet({ type: 'expense', id })} />
-      ) : <p className="tile-empty">Nothing logged for this project yet.</p>}
+      <ExpenseDays list={list} catsById={catsById} projectsById={{}} showProject={false}
+        empty="Nothing logged for this project yet." onOpen={(id) => onSheet({ type: 'expense', id })} />
       {bills.length > 0 && <p className="hint">Bills tagged here: {bills.map((b) => b.name).join(', ')}.</p>}
       <div className="sheet-actions">
         <button className="primary" onClick={() => onSheet({ type: 'expense', defaults: { projectId } })}><Icon name="plus" size={18} />Log spending</button>
-        <button className="text-btn" onClick={onClose}>Close</button>
       </div>
     </Sheet>
   );
@@ -678,11 +709,6 @@ export function CategorySheet({ hub, catId, ym: startYm, projects, onSheet, onCl
   const spent = list.reduce((s, x) => s + sgdOf(x), 0);
   const last = all.filter((x) => monthOf(x.date) === addMonths(ym, -1)).reduce((s, x) => s + sgdOf(x), 0);
   const budget = cat ? cat.budget || 0 : !catId ? cats.reduce((s, c) => s + (c.budget || 0), 0) : 0;
-  const days = [];
-  for (const x of list) {
-    if (!days.length || days[days.length - 1].date !== x.date) days.push({ date: x.date, list: [] });
-    days[days.length - 1].list.push(x);
-  }
   const byCat = {};
   if (!catId) for (const x of list) byCat[x.category] = (byCat[x.category] || 0) + sgdOf(x);
   const diff = spent - last;
@@ -716,17 +742,8 @@ export function CategorySheet({ hub, catId, ym: startYm, projects, onSheet, onCl
           ))}
         </ul>
       )}
-      <div className="m-drawer-list">
-        {days.length ? days.map((d) => (
-          <div key={d.date} className="m-day">
-            <h3 className="m-day-head">
-              <span>{d.date === today ? 'Today' : d.date === addDays(today, -1) ? 'Yesterday' : dayDate(d.date)}</span>
-              <span>{money(d.list.reduce((s, x) => s + sgdOf(x), 0))}</span>
-            </h3>
-            <ExpenseRows list={d.list} catsById={catsById} projectsById={projectsById} showCat={!catId} onOpen={(id) => onSheet({ type: 'expense', id })} />
-          </div>
-        )) : <p className="tile-empty">Nothing logged{catId ? ' here' : ''} in {monthLabel(ym)}.</p>}
-      </div>
+      <ExpenseDays list={list} catsById={catsById} projectsById={projectsById} showCat={!catId}
+        empty={`Nothing logged${catId ? ' here' : ''} in ${monthLabel(ym)}.`} onOpen={(id) => onSheet({ type: 'expense', id })} />
       <div className="sheet-actions">
         <button className="primary" onClick={() => onSheet({ type: 'expense', defaults: { ...(cat ? { category: cat.id } : {}), ...(ym !== monthOf(today) ? { date: `${ym}-01` } : {}) } })}>
           <Icon name="plus" size={18} />Log spending

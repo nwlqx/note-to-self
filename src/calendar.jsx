@@ -14,16 +14,28 @@ const shiftMonth = (k, n) => {
   return dateKey(d);
 };
 
-export function CalendarPage({ mode = 'day', setMode, ...props }) {
+export function CalendarPage({ mode = 'day', setMode, calendars = [], onShowCalendar, ...props }) {
   const head = (
-    <header className="view-head">
-      <h1>Calendar</h1>
-      <div className="seg seg-small seg-three" role="radiogroup" aria-label="Show">
-        <button role="radio" aria-checked={mode === 'day'} onClick={() => setMode('day')}>Day</button>
-        <button role="radio" aria-checked={mode === 'week'} onClick={() => setMode('week')}>Week</button>
-        <button role="radio" aria-checked={mode === 'month'} onClick={() => setMode('month')}>Month</button>
-      </div>
-    </header>
+    <>
+      <header className="view-head">
+        <h1>Calendar</h1>
+        <div className="seg seg-small seg-three" role="radiogroup" aria-label="Show">
+          <button role="radio" aria-checked={mode === 'day'} onClick={() => setMode('day')}>Day</button>
+          <button role="radio" aria-checked={mode === 'week'} onClick={() => setMode('week')}>Week</button>
+          <button role="radio" aria-checked={mode === 'month'} onClick={() => setMode('month')}>Month</button>
+        </div>
+      </header>
+      {/* one chip per synced Google calendar; switching one off hides its events everywhere in the app */}
+      {calendars.length > 0 && (
+        <div className="filters cal-toggles" role="group" aria-label="Google calendars shown">
+          {calendars.map((c) => (
+            <button key={c.id} className="chip" aria-pressed={c.shown} style={areaStyle(c.area)} onClick={() => onShowCalendar(c.id, !c.shown)}>
+              <span className="chip-dot" />{c.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </>
   );
   if (mode === 'week') return <WeekView {...props} head={head} />;
   if (mode === 'month') return <MonthView {...props} head={head} />;

@@ -2711,3 +2711,10 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
   position: absolute; right: 0; top: calc(100% - 6px); z-index: 5; width: 17rem; padding: 8px;
   background: var(--surface); border-radius: var(--radius-md); box-shadow: 0 0 0 1px var(--line), var(--shadow-lift);
 }
+/* "Up to date, 2:57am" doubles as a check-now button */
+.sync-now { cursor: pointer; padding: 0; background: none; text-align: right; }
+.sync-now:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+/* event sheet: "Add to Google Calendar" */
+.gcal-add { align-self: flex-start; text-decoration: none; }
+.gcal-add svg { flex: none; }
+.cal-toggles { margin: calc(-1 * var(--s3)) 0 var(--s4); }

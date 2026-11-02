@@ -188,17 +188,29 @@ export function useHub() {
     }
   }, [conn]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Pull when opened, when brought back to the front, and every few minutes.
+  // Pull when opened, when shown again, when the window is clicked back into (a Mac app window
+  // usually stays visible behind others, so showing it again isn't enough), and every minute
+  // while it's on screen. Checks closer together than 10 seconds are skipped.
   useEffect(() => {
     if (!client) return;
+    let last = 0;
+    const check = () => {
+      if (document.visibilityState !== 'visible' || Date.now() - last < 10000) return;
+      last = Date.now();
+      pull().then(() => push());
+    };
+    last = Date.now();
     pull().then(() => push());
-    const onFocus = () => document.visibilityState === 'visible' && pull().then(() => push());
     const onOnline = () => pull().then(() => push());
-    document.addEventListener('visibilitychange', onFocus);
+    document.addEventListener('visibilitychange', check);
+    window.addEventListener('focus', check);
+    window.addEventListener('pageshow', check);
     window.addEventListener('online', onOnline);
-    const iv = setInterval(() => document.visibilityState === 'visible' && pull(), 5 * 60 * 1000);
+    const iv = setInterval(check, 60 * 1000);
     return () => {
-      document.removeEventListener('visibilitychange', onFocus);
+      document.removeEventListener('visibilitychange', check);
+      window.removeEventListener('focus', check);
+      window.removeEventListener('pageshow', check);
       window.removeEventListener('online', onOnline);
       clearInterval(iv);
     };
@@ -484,6 +496,14 @@ export function useHub() {
   const setName = (name) =>
     update('settings', (st) => ({ ...st, name, nameUpdatedAt: nowIso() }));
 
+  // Calendars switched off on the Calendar page; kept in settings so every device matches.
+  const setCalendarShown = (calId, shown) =>
+    update('settings', (s) => {
+      const hidden = new Set(s.hiddenCalendars || []);
+      if (shown) hidden.delete(calId); else hidden.add(calId);
+      return { ...s, hiddenCalendars: [...hidden], hiddenCalendarsUpdatedAt: nowIso() };
+    });
+
   const setCalendarArea = (calId, areaId) =>
     update('settings', (s) => ({
       ...s,
@@ -529,7 +549,7 @@ export function useHub() {
   return {
     conn, data, status, pending,
     syncNow: () => pull().then(() => push()),
-    upsertItem, saveCard, moveCard, toggleDone, deleteItem, saveAreas, setCalendarArea, saveProject, setName,
+    upsertItem, saveCard, moveCard, toggleDone, deleteItem, saveAreas, setCalendarArea, setCalendarShown, saveProject, setName,
     uploadAttachment, removeAttachment, attachmentUrl,
     saveList, deleteList, promoteListItem,
     saveRecipe, deleteRecipe, setMeal, clearMeal, saveGrocery, deleteGrocery, clearTickedGroceries, addWeekToGroceries, addRecipeToGroceries,

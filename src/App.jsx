@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useHub } from './store.js';
 import { buildEntries, todayKey, startOfWeek, firstOpenSection, projectProgress, uid } from './model.js';
 import { Icon, useTheme, projectStyle, ProjectIcon } from './ui.jsx';
-import { Connect, Setup, SettingsView } from './views.jsx';
+import { Connect, Setup, SettingsView, calendarsOf } from './views.jsx';
 import { CalendarPage } from './calendar.jsx';
 import { ProjectsOverview, ProjectView, ProjectSheet } from './projects.jsx';
 import { CardSheet, CalendarSheet } from './card.jsx';
@@ -29,6 +29,14 @@ function SyncNote({ hub }) {
         {status.state === 'auth' ? 'GitHub token stopped working' : "Couldn't reach GitHub"}
         <button className="text-btn small" onClick={hub.syncNow}>Try again</button>
       </span>
+    );
+  }
+  // Tapping the note checks GitHub for changes made on another device right away.
+  if (status.state === 'synced' && !pending) {
+    return (
+      <button type="button" className="sync sync-now" role="status" onClick={hub.syncNow} title="Check for changes now">
+        {map.synced}
+      </button>
     );
   }
   return <span className="sync" role="status">{map[status.state]}</span>;
@@ -252,7 +260,8 @@ export default function App() {
             onOpenSpending={() => setSheet({ type: 'spending', projectId: currentProject.id })} />
         )}
         {view.name === 'calendar' && (
-          <CalendarPage {...props} weekStart={weekStart} setWeekStart={setWeekStart} month={month} setMonth={setMonth}
+          <CalendarPage {...props} calendars={calendarsOf(hub.data.calendar).map((c) => ({ ...c, area: areasById[settings.calendarAreas?.[c.id]], shown: !(settings.hiddenCalendars || []).includes(c.id) }))}
+            onShowCalendar={hub.setCalendarShown} weekStart={weekStart} setWeekStart={setWeekStart} month={month} setMonth={setMonth}
             day={day} setDay={setDay} mode={calMode} setMode={setCalMode}
             onNewAt={(date, time, endTime) => setSheet({ type: 'card', defaults: { id: 'c-' + uid(), kind: 'event', date, time, endTime } })}
             draft={sheet?.type === 'card' && !sheet.cardId && sheet.defaults?.time ? sheet.defaults : null} />

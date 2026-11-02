@@ -131,6 +131,9 @@ export function mergeSettings(local, remote) {
     lists: mergeById(l.lists, r.lists).sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.id.localeCompare(b.id)),
     calendarAreas: calNewer ? l.calendarAreas || {} : r.calendarAreas || {},
     calendarAreasUpdatedAt: calNewer ? l.calendarAreasUpdatedAt : r.calendarAreasUpdatedAt,
+    ...(((l.hiddenCalendarsUpdatedAt || '') >= (r.hiddenCalendarsUpdatedAt || ''))
+      ? { hiddenCalendars: l.hiddenCalendars || [], hiddenCalendarsUpdatedAt: l.hiddenCalendarsUpdatedAt }
+      : { hiddenCalendars: r.hiddenCalendars || [], hiddenCalendarsUpdatedAt: r.hiddenCalendarsUpdatedAt }),
     ...(((l.nameUpdatedAt || '') >= (r.nameUpdatedAt || '')) ? { name: l.name || '', nameUpdatedAt: l.nameUpdatedAt } : { name: r.name || '', nameUpdatedAt: r.nameUpdatedAt }),
   };
 }
@@ -189,6 +192,25 @@ export function migrate(items, settings) {
   return { items: { items: nextItems }, settings: { ...settings, projects } };
 }
 
+// A Google Calendar "new event" link with this event's details filled in. Google opens it
+// ready to save, where you pick which of your calendars it goes in.
+export function googleCalendarUrl({ title, date, endDate, time, endTime, notes }) {
+  const day = (k) => k.replace(/-/g, '');
+  const stamp = (d) => `${day(dateKey(d))}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  let dates;
+  if (time && !(endDate && endDate > date)) {
+    const start = new Date(`${date}T${time}`);
+    const end = endTime && endTime > time ? new Date(`${date}T${endTime}`) : new Date(start.getTime() + 3600e3);
+    dates = `${stamp(start)}/${stamp(end)}`;
+  } else {
+    // all-day: Google's end date is the day after the last day
+    dates = `${day(date)}/${day(addDays(endDate && endDate > date ? endDate : date, 1))}`;
+  }
+  const q = new URLSearchParams({ action: 'TEMPLATE', text: title || '', dates, ctz: Intl.DateTimeFormat().resolvedOptions().timeZone });
+  if (notes?.trim()) q.set('details', notes.trim());
+  return `https://calendar.google.com/calendar/render?${q}`;
+}
+
 // ---------- entries: items and calendar events in one shape ----------
 export function buildEntries(items, events, settings) {
   const out = [];
@@ -216,7 +238,7 @@ export function buildEntries(items, events, settings) {
   }
   for (const ev of events || []) {
     const area = settings?.calendarAreas?.[ev.calendar] || null;
-    if (area === 'hidden') continue;
+    if (area === 'hidden' || settings?.hiddenCalendars?.includes(ev.calendar)) continue;
     let date, endDate = '', time = '';
     if (ev.allDay) {
       date = ev.start;

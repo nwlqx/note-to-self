@@ -1,6 +1,6 @@
 // The card sheet. Changes save as you go, like Asana: there is no Save button.
 import React, { useEffect, useRef, useState } from 'react';
-import { KINDS, uid, sectionOf } from './model.js';
+import { KINDS, uid, sectionOf, googleCalendarUrl } from './model.js';
 import { Sheet, Icon, areaColor, findLinks, linkLabel, rangeLabel, longDate, time12, ConfirmButton } from './ui.jsx';
 import { formatSize } from './files.js';
 import { QuadPicker } from './todo.jsx';
@@ -183,6 +183,13 @@ export function CardSheet({ hub, cardId, defaults, areas, projects, onClose }) {
             )}
           </>
         </div>
+      )}
+      {/* Opens Google Calendar with this event filled in; you pick Work or Personal there and save.
+          The hourly sync then brings it back here from Google. */}
+      {f.kind === 'event' && f.date && f.title.trim() && (
+        <a className="secondary gcal-add" href={googleCalendarUrl(f)} target="_blank" rel="noreferrer">
+          <Icon name="calendar" size={16} />Add to Google Calendar
+        </a>
       )}
 
 

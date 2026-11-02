@@ -188,7 +188,7 @@ function CalendarMapping({ calendars, areas, value, onChange }) {
   );
 }
 
-function calendarsOf(calendar) {
+export function calendarsOf(calendar) {
   const list = [...(calendar?.calendars || [])];
   for (const e of calendar?.events || []) {
     if (!list.some((c) => c.id === e.calendar)) list.push({ id: e.calendar, name: e.calendar });

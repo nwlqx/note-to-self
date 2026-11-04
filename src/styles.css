@@ -1993,7 +1993,8 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
 .to-buy .m-section-head > .text-btn { margin-left: auto; }
 .to-buy .quad { display: flex; flex-direction: column; }
 .buy-foot { margin-top: auto; display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
-.buy-foot .inline-add, .buy-foot .inline-add-form { flex: 1 1 auto; }
+.buy-foot .card-add { flex: 1 1 auto; margin-top: 0; }
+.buy-foot .card-add:has(.inline-add-form) { flex-basis: 100%; } /* typing: the boxes take the full width, the total drops below */
 .buy-total { margin-left: auto; padding: 6px 4px 2px; font-size: var(--text-xs); color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .buy-total strong { color: var(--ink); font-weight: 600; }
 #m-budgets { background-image: none; padding-inline: 0; margin-inline-start: 0; }

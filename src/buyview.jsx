@@ -104,8 +104,9 @@ export function ToBuy({ hub, projects, onSheet }) {
             {lineAtEnd && <li className="drop-line" style={{ height: drag.h }} />}
           </ul>
           {more > 0 && <button className="text-btn small quiet" onClick={() => setFocus(q.id)}>{more} more</button>}
-          <InlineAdd label="Add an item" placeholder="Item" extra="price" onAdd={(t, price) => add(q.id, t, price)} />
+          {/* the same small "+ Add" as the To-do cards, at the bottom left beside the total */}
           <div className="buy-foot">
+            <div className="card-add"><InlineAdd label="Add" ariaLabel={`Add an item to ${q.name}`} placeholder="Item" extra="price" onAdd={(t, price) => add(q.id, t, price)} /></div>
             {count > 0 && (
               <span className="buy-total">{count} item{count === 1 ? '' : 's'}{total > 0 ? <>, <strong>{money(total, BASE, { compact: total >= 100 || Number.isInteger(total) })}</strong></> : ''}</span>
             )}

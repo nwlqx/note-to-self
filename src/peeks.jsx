@@ -1,6 +1,6 @@
 // Quick views that open when you hover a tab in the menu bar (Mac and other mouse devices only).
 // Projects has its own in App.jsx; these cover To-do, Calendar, Meals and Budgeting.
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { todayKey, sortEntries, isOpenTask } from './model.js';
 import { Icon, areaStyle, projectStyle, ProjectIcon, shortDate, time12 } from './ui.jsx';
 import { liveCategories, liveExpenses, liveBills, sgdOf, money, monthOf, monthLabel, BASE } from './money.js';
@@ -13,9 +13,26 @@ const canHover = () => typeof matchMedia !== 'undefined' && matchMedia('(hover: 
 export function HoverPeek({ label, children, render }) {
   const [open, setOpen] = useState(false);
   const timer = useRef(null);
+  const peekRef = useRef(null);
   const show = () => { clearTimeout(timer.current); timer.current = setTimeout(() => setOpen(true), 120); };
   const hide = () => { clearTimeout(timer.current); timer.current = setTimeout(() => setOpen(false), 180); };
   useEffect(() => () => clearTimeout(timer.current), []);
+  // The quick view is centred over its tab; slide it back inside the window when a tab near
+  // either edge (Meals, the Add button) would push it off screen.
+  useLayoutEffect(() => {
+    const el = peekRef.current;
+    if (!open || !el) return undefined;
+    const fit = () => {
+      el.style.removeProperty('--peek-shift');
+      const { left, right } = el.getBoundingClientRect();
+      const edge = 12, w = document.documentElement.clientWidth;
+      const shift = left < edge ? edge - left : right > w - edge ? w - edge - right : 0;
+      if (shift) el.style.setProperty('--peek-shift', `${Math.round(shift)}px`);
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [open]);
   useEffect(() => {
     if (!open) return undefined;
     const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
@@ -28,7 +45,7 @@ export function HoverPeek({ label, children, render }) {
     <div className="peek-wrap" onMouseEnter={show} onMouseLeave={hide}
       onFocus={show} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) hide(); }}>
       {children}
-      {open && <div className="peek" role="group" aria-label={label}>{render(close)}</div>}
+      {open && <div className="peek" ref={peekRef} role="group" aria-label={label}>{render(close)}</div>}
     </div>
   );
 }

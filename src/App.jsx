@@ -243,6 +243,7 @@ export default function App() {
 
         {view.name === 'todo' && (
           <TodoView hub={hub} areas={activeAreas} areasById={areasById} projects={projects} onOpenCard={openCard}
+            onNewTask={(defaults) => setSheet({ type: 'card', defaults })}
             entries={entries} onOpen={openEntry}
             onOpenProject={(id) => { setView({ name: 'project', id }); window.scrollTo(0, 0); }}
             onOpenDay={(d) => { setDay(d); setCalMode('day'); setView({ name: 'calendar' }); window.scrollTo(0, 0); }}

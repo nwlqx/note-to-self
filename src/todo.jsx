@@ -1,7 +1,7 @@
 // The to-do matrix (home). Tasks and deadlines from anywhere, placed by hand
 // into one of four quadrants. Anything not placed yet waits in "To sort".
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { QUADRANTS, todayKey, dateKey, uid, sortEntries, covers, addDays, startOfWeek, isOpenTask, hueOf } from './model.js';
+import { QUADRANTS, todayKey, dateKey, uid, sortEntries, covers, addDays, startOfWeek, isOpenTask, hueOf, firstOpenSection } from './model.js';
 import { useDragSort, dropOrder } from './drag.js';
 import { Icon, Mark, entryGlyph, areaColor, areaStyle, projectStyle, ProjectIcon, shortDate, dayDate, time12 } from './ui.jsx';
 import { DragGhost, InlineAdd, cardGlyph } from './projects.jsx';
@@ -35,7 +35,7 @@ export function QuadPicker({ value, onPick, onClear, compact = false }) {
   );
 }
 
-export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries = [], onOpen, onOpenProject, onOpenDay, onOpenWeek }) {
+export function TodoView({ hub, areas, areasById, projects, onOpenCard, onNewTask, entries = [], onOpen, onOpenProject, onOpenDay, onOpenWeek }) {
   const wide = useWide();
   const items = hub.data.items.items;
   const projectsById = useMemo(() => Object.fromEntries(projects.map((p) => [p.id, p])), [projects]);
@@ -72,6 +72,13 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
   const doneToday = items.filter((c) => !c.deleted && c.done && c.doneAt && dateKey(new Date(c.doneAt)) === today).length;
   const hasNoArea = open.some((c) => areaOf(c) === 'none');
 
+  // Quick add inside a card: a plain task in that quadrant (or To sort), in the filtered project if there is one.
+  const addTo = (quadrant, title, date = '') => {
+    const onlyArea = areas.filter((a) => !hidden.has(a.id));
+    hub.saveCard({ id: 'c-' + uid(), title, kind: date ? 'deadline' : 'task', ...(date ? { date } : {}), projectId: projectsById[proj] ? proj : '', area: onlyArea.length === 1 ? onlyArea[0].id : '',
+      quadrant, qOrder: (zonesRef.current[quadrant] || []).reduce((m, c) => Math.max(m, c.qOrder ?? 0), 0) + 1000 });
+  };
+
   const place = (id, quadrant, index) => {
     const list = (zonesRef.current[quadrant] || []).filter((c) => !c.done);
     hub.upsertItem({ id, quadrant, qOrder: index == null ? (list.length ? (list[list.length - 1].qOrder ?? 0) + 1000 : 1000) : dropOrder(list, id, index, 'qOrder') });
@@ -88,14 +95,6 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
     n.has(id) ? n.delete(id) : n.add(id);
     return n;
   });
-
-  const addTo = (quadrant, title, date = '') => {
-    const onlyArea = areas.filter((a) => !hidden.has(a.id));
-    hub.saveCard({
-      id: 'c-' + uid(), title, kind: date ? 'deadline' : 'task', ...(date ? { date } : {}), projectId: projectsById[proj] ? proj : '', area: onlyArea.length === 1 ? onlyArea[0].id : '',
-      quadrant, qOrder: (zonesRef.current[quadrant] || []).reduce((m, c) => Math.max(m, c.qOrder ?? 0), 0) + 1000,
-    });
-  };
 
   const meta = (c) => {
     const bits = [];
@@ -172,7 +171,8 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
             {lineAtEnd && <li className="drop-line" style={{ height: drag.h }} />}
           </ul>
           {more > 0 && <button className="text-btn small quiet" onClick={() => setFocus(q.id)}>{more} more</button>}
-          <InlineAdd label="Add a task" placeholder="Task" extra="date" onAdd={(t, d) => addTo(q.id, t, d)} />
+          {/* pinned to the bottom left, so it sits in the same place in every card however many tasks it holds */}
+          <div className="card-add"><InlineAdd label="Add" ariaLabel={`Add a task to ${q.name}`} placeholder="Task" extra="date" onAdd={(t, d) => addTo(q.id, t, d)} /></div>
         </div>
       </section>
     );
@@ -187,9 +187,15 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
       <Bento entries={entries} items={items} projects={projects} areasById={areasById}
         onOpenDay={onOpenDay} onOpenWeek={onOpenWeek} onOpenProject={onOpenProject} />
 
+      {/* one "Add task" for the whole matrix, so the cards don't each carry a button at a different height.
+          It opens the task sheet with the filtered project, and the quadrant when one is open full screen. */}
       <header className="todo-head">
         <h2 className="sr-only">To-do</h2>
         <ProjectFilter projects={projects.filter((p) => !p.archived)} value={proj} onChange={setProj} />
+        <button className="text-btn todo-add" onClick={() => {
+          const p = projectsById[proj];
+          onNewTask({ kind: 'task', ...(p ? { projectId: p.id, area: p.area, section: firstOpenSection(p)?.id } : {}), ...(focus && !wide ? { quadrant: focus } : {}) });
+        }}><Icon name="plus" size={14} />Add task</button>
       </header>
 
       <div className="todo-layout">
@@ -220,7 +226,7 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, entries 
           {!showAllTray && trayRows.rows.length > 8 && (
             <button className="text-btn small quiet" onClick={() => setShowAllTray(true)}>Show all {trayRows.rows.length}</button>
           )}
-          <InlineAdd label="Add a task" placeholder="Task" extra="date" onAdd={(t, d) => addTo('', t, d)} />
+          <div className="card-add"><InlineAdd label="Add" ariaLabel="Add a task to sort later" placeholder="Task" extra="date" onAdd={(t, d) => addTo('', t, d)} /></div>
         </section>
       </div>
       <DragGhost drag={drag} />

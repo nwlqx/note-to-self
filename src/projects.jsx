@@ -192,7 +192,7 @@ function SpendPill({ hub, project, onOpen }) {
 
 // `extra` adds an optional second box: 'price' passes a number to onAdd ('' when left empty),
 // 'date' passes a YYYY-MM-DD due date ('' when left empty).
-export function InlineAdd({ onAdd, label = 'Add card', placeholder = 'Card title', extra = '' }) {
+export function InlineAdd({ onAdd, label = 'Add card', ariaLabel = label, placeholder = 'Card title', extra = '' }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const [second, setSecond] = useState('');
@@ -211,7 +211,7 @@ export function InlineAdd({ onAdd, label = 'Add card', placeholder = 'Card title
     // The words after the first are wrapped so very narrow cards can shorten "Add a task" to "Add".
     const [first, ...rest] = label.split(' ');
     return (
-      <button className="inline-add" aria-label={label} onClick={() => setOpen(true)}>
+      <button className="inline-add" aria-label={ariaLabel} onClick={() => setOpen(true)}>
         <Icon name="plus" size={16} /><span>{first}{rest.length > 0 && <span className="inline-add-rest">{' ' + rest.join(' ')}</span>}</span>
       </button>
     );

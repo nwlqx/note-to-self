@@ -20,7 +20,10 @@ const bundle = (preview) => build({
   loader: { '.js': 'jsx' },
 });
 const js = (await bundle(false)).outputFiles[0].text;
-const css = await fs.readFile('src/styles.css', 'utf8');
+// Open Props supplies the shared scales (sizes, easings); the app's own tokens in styles.css build on them.
+const OPEN_PROPS = ['sizes', 'easings'];
+const openProps = (await Promise.all(OPEN_PROPS.map((f) => fs.readFile(`node_modules/open-props/${f}.min.css`, 'utf8')))).join('');
+const css = openProps + await fs.readFile('src/styles.css', 'utf8');
 const version = crypto.createHash('sha1').update(js + css).digest('hex').slice(0, 10);
 
 // The design system's three typefaces ship with the app, so it works offline

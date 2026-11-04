@@ -4,7 +4,7 @@ import { normKind, listsOf, sectionOf, orderBetween, newProject, fallbackHue, PR
 import { useDragSort, dropOrder } from './drag.js';
 import { DueStrip } from './calendar.jsx';
 import { liveExpenses, sgdOf, money } from './money.js';
-import { ProjectLists } from './lists.jsx';
+import { ProjectLists, addChecklist } from './lists.jsx';
 import { Icon, EntryRow, areaColor, areaStyle, projectStyle, ProjectIcon, dayDate, shortDate, rangeLabel, metaFor, Sheet, Mark, ConfirmButton } from './ui.jsx';
 
 const cardsOf = (items, projectId) => items.filter((x) => !x.deleted && x.projectId === projectId);
@@ -117,7 +117,6 @@ const loadLayout = (id) => { try { return localStorage.getItem(layoutKey(id)) ||
 
 export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEditProject, onOpenSpending }) {
   const [layout, setLayoutState] = useState(() => loadLayout(project.id));
-  const [newList, setNewList] = useState(0); // bumped by "+ Checklist" to open a new checklist below
   const setLayout = (l) => { setLayoutState(l); try { localStorage.setItem(layoutKey(project.id), l); } catch { /* ignore */ } };
   const area = areasById[project.area];
   const cards = cardsOf(hub.data.items.items, project.id);
@@ -130,6 +129,8 @@ export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEdi
     for (const k of Object.keys(m)) m[k].sort(byOrder);
     return m;
   }, [cards, project]);
+
+  const hasLists = listsOf(hub.data.settings, project.id).length > 0;
 
   const addCard = (section, title) => {
     const list = bySection[section] || [];
@@ -154,14 +155,12 @@ export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEdi
               <button role="radio" aria-checked={layout === 'board'} onClick={() => setLayout('board')}><Icon name="board" size={16} />Board</button>
               <button role="radio" aria-checked={layout === 'list'} onClick={() => setLayout('list')}><Icon name="list" size={16} />List</button>
             </div>
-            {/* checklists (packing, documents) aren't tasks, so they get their own way in, next to the layout */}
-            <button className="text-btn small proj-new-list" onClick={() => setNewList((n) => n + 1)}><Icon name="plus" size={14} />Checklist</button>
             <button className="icon-btn" onClick={onEditProject} aria-label="Project settings"><Icon name="more" /></button>
           </div>
         </div>
       </header>
 
-      <div className="proj-body">
+      <div className={`proj-body${hasLists ? ' has-lists' : ''}`}>
         <div className="proj-main">
           {layout === 'board' ? (
             <Board hub={hub} project={project} bySection={bySection} onOpenCard={onOpenCard} onAdd={addCard} />
@@ -169,7 +168,7 @@ export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEdi
             <ListLayout hub={hub} project={project} bySection={bySection} area={area} onOpenCard={onOpenCard} onAdd={addCard} />
           )}
         </div>
-        <ProjectLists hub={hub} project={project} onOpenCard={onOpenCard} openNew={newList} />
+        {hasLists && <ProjectLists hub={hub} project={project} onOpenCard={onOpenCard} />}
       </div>
     </section>
   );
@@ -279,7 +278,7 @@ function Board({ hub, project, bySection, onOpenCard, onAdd }) {
           const { rows, lineAtEnd } = rowsFor(list, s.id);
           return (
             <section key={s.id} className="column" data-drop={s.id} data-section={s.id} data-done-section={s.done || undefined} aria-label={s.name}>
-              <SectionHead hub={hub} project={project} section={s} count={list.length} />
+              <SectionHead hub={hub} project={project} section={s} cards={list} />
               <ul className="cards">
                 {rows.map(({ c, dragging, lineBefore }) => (
                   <React.Fragment key={c.id}>
@@ -306,6 +305,7 @@ function Board({ hub, project, bySection, onOpenCard, onAdd }) {
         })}
         <div className="column column-add">
           <InlineAdd label="Add section" placeholder="Section name" onAdd={(name) => addSection(hub, project, name)} />
+          <InlineAdd label="Add checklist" placeholder="Checklist name, e.g. Packing" onAdd={(name) => addChecklist(hub, project, name)} />
         </div>
       </div>
       <DragGhost drag={drag} />
@@ -335,7 +335,7 @@ function ListLayout({ hub, project, bySection, area, onOpenCard, onAdd }) {
         const collapsed = s.done && !openDone && list.length > 0;
         return (
           <section key={s.id} className="list-section" aria-label={s.name}>
-            <SectionHead hub={hub} project={project} section={s} count={list.length} vertical />
+            <SectionHead hub={hub} project={project} section={s} cards={list} vertical />
             {collapsed ? (
               <button className="text-btn small quiet" onClick={() => setOpenDone(true)}>Show {list.length} done</button>
             ) : (
@@ -357,6 +357,7 @@ function ListLayout({ hub, project, bySection, area, onOpenCard, onAdd }) {
       })}
       <div className="list-section list-section-add">
         <InlineAdd label="Add section" placeholder="Section name" onAdd={(name) => addSection(hub, project, name)} />
+        <InlineAdd label="Add checklist" placeholder="Checklist name, e.g. Packing" onAdd={(name) => addChecklist(hub, project, name)} />
       </div>
     </div>
   );
@@ -372,7 +373,9 @@ function addSection(hub, project, name) {
   hub.saveProject({ ...cur, sections: n });
 }
 
-function SectionHead({ hub, project, section, count, vertical }) {
+function SectionHead({ hub, project, section, cards, vertical }) {
+  const count = cards.length;
+  const doneCards = cards.filter((c) => c.done);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(section.name);
   const [menu, setMenu] = useState(false);
@@ -434,7 +437,13 @@ function SectionHead({ hub, project, section, count, vertical }) {
           <button type="button" role="menuitem" onClick={startRename}>Rename</button>
           {index > 0 && <button type="button" role="menuitem" onClick={() => move(-1)}>{vertical ? 'Move up' : 'Move left'}</button>}
           {index < all.length - 1 && <button type="button" role="menuitem" onClick={() => move(1)}>{vertical ? 'Move down' : 'Move right'}</button>}
-          {all.length > 1 && (
+          {/* the done section stays (finished cards need somewhere to go); it can be emptied instead */}
+          {section.done ? doneCards.length > 0 && (
+            <ConfirmButton className="danger-item" role="menuitem" onConfirm={() => { setMenu(false); hub.deleteItems(doneCards.map((c) => c.id)); }}
+              confirmText={`Delete ${doneCards.length} card${doneCards.length === 1 ? '' : 's'}?`}>
+              Delete all done
+            </ConfirmButton>
+          ) : all.length > 1 && (
             <ConfirmButton className="danger-item" role="menuitem" onConfirm={remove}
               confirmText={count ? `Delete and move ${count} card${count === 1 ? '' : 's'}` : 'Tap again to delete'}>
               Delete section

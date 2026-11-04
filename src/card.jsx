@@ -1,6 +1,6 @@
 // The card sheet. Changes save as you go, like Asana: there is no Save button.
 import React, { useEffect, useRef, useState } from 'react';
-import { KINDS, uid, sectionOf, googleCalendarUrl } from './model.js';
+import { KINDS, uid, sectionOf, googleCalendarUrl, isEventKind } from './model.js';
 import { Sheet, Icon, areaColor, findLinks, linkLabel, rangeLabel, longDate, time12, ConfirmButton } from './ui.jsx';
 import { formatSize } from './files.js';
 import { QuadPicker } from './todo.jsx';
@@ -115,10 +115,10 @@ export function CardSheet({ hub, cardId, defaults, areas, projects, onClose }) {
     <Sheet onClose={close} label={f.title || 'New card'} wide>
       <div className="card-sheet-top">
         <button className="text-btn small quiet" onClick={close}>Close</button>
-        {live && (live.kind === 'task' || live.kind === 'deadline' || !live.kind) && (
-          <button className={`done-btn${done ? ' is-done' : ''}`} aria-pressed={done}
+        {live && !isEventKind(live.kind) && (
+          <button className={`done-btn${done ? ' is-done' : ''}`} aria-pressed={done} title={done ? 'Mark as not done' : undefined}
             onClick={() => { flush(); hub.toggleDone(f.id); }}>
-            <Icon name="check" size={18} />{done ? 'Done' : 'Mark done'}
+            <Icon name="check" size={18} />{done ? 'Marked as done' : 'Mark done'}
           </button>
         )}
       </div>

@@ -75,6 +75,20 @@ export const normKind = (k, date) => {
   return date ? 'deadline' : 'task';
 };
 export const isEventKind = (k) => k === 'event' || k === 'trip';
+// When an event is over: its end time, an hour after its start time if it has no end, or the
+// end of its last day if it has no time at all.
+export function eventIsOver(card, now = new Date()) {
+  if (!isEventKind(card.kind) || !card.date) return false;
+  const last = card.endDate && card.endDate > card.date ? card.endDate : card.date;
+  let end;
+  if (card.time && last === card.date) {
+    end = card.endTime && card.endTime > card.time ? new Date(`${last}T${card.endTime}`) : new Date(new Date(`${last}T${card.time}`).getTime() + 3600e3);
+  } else {
+    end = new Date(`${last}T00:00`);
+    end.setDate(end.getDate() + 1);
+  }
+  return end <= now;
+}
 
 export const uid = () =>
   Date.now().toString(36) + Math.random().toString(36).slice(2, 8);

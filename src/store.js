@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient, ConflictError, AuthError } from './github.js';
 import {
-  mergeItems, mergeSettings, same, nowIso, uid, migrate, todayKey, doneSection, firstOpenSection, sectionOf, orderBetween,
+  mergeItems, mergeSettings, same, nowIso, uid, migrate, todayKey, doneSection, firstOpenSection, sectionOf, orderBetween, eventIsOver,
 } from './model.js';
 import { prepareUpload } from './files.js';
 import { demoData, DEMO_VERSION } from './demo.js';
@@ -250,13 +250,47 @@ export function useHub() {
     }));
   };
 
-  const deleteItem = (id) => {
-    const card = dataRef.current.items.items.find((x) => x.id === id);
-    for (const a of card?.attachments || []) removeFile(a);
+  const deleteItem = (id) => deleteItems([id]);
+  // Several at once (a project's done cards) in one save.
+  const deleteItems = (ids) => {
+    const gone = new Set(ids);
+    for (const card of dataRef.current.items.items) if (gone.has(card.id)) for (const a of card.attachments || []) removeFile(a);
     update('items', (f) => ({
-      items: f.items.map((x) => (x.id === id ? { id, deleted: true, updatedAt: nowIso() } : x)),
+      items: f.items.map((x) => (gone.has(x.id) ? { id: x.id, deleted: true, updatedAt: nowIso() } : x)),
     }));
   };
+
+  // Events tick themselves off once they are over, and in a project they move to its done
+  // section, as if ticked by hand. Checked on open, every minute, and on coming back to the app.
+  const finishPastEvents = () => {
+    const now = new Date();
+    const over = dataRef.current.items.items.filter((x) => !x.deleted && !x.done && eventIsOver(x, now));
+    if (!over.length) return;
+    const ends = {};
+    const moved = {};
+    for (const card of over) {
+      const proj = projectOf(card);
+      const sec = doneSection(proj);
+      if (!sec) continue;
+      const key = proj.id + '/' + sec.id;
+      if (!(key in ends)) ends[key] = lastOrderIn(proj.id, sec.id);
+      ends[key] = orderBetween(ends[key], null);
+      moved[card.id] = { section: sec.id, order: ends[key] };
+    }
+    const ids = new Set(over.map((x) => x.id));
+    update('items', (f) => ({
+      items: f.items.map((x) => (ids.has(x.id) ? { ...x, ...moved[x.id], done: true, doneAt: nowIso(), updatedAt: nowIso() } : x)),
+    }));
+  };
+  const finishRef = useRef(finishPastEvents);
+  finishRef.current = finishPastEvents;
+  useEffect(() => {
+    const run = () => document.visibilityState === 'visible' && finishRef.current();
+    run();
+    const iv = setInterval(run, 60 * 1000);
+    document.addEventListener('visibilitychange', run);
+    return () => { clearInterval(iv); document.removeEventListener('visibilitychange', run); };
+  }, []);
 
   // ---------- projects ----------
   const saveProject = (project) =>
@@ -549,7 +583,7 @@ export function useHub() {
   return {
     conn, data, status, pending,
     syncNow: () => pull().then(() => push()),
-    upsertItem, saveCard, moveCard, toggleDone, deleteItem, saveAreas, setCalendarArea, setCalendarShown, saveProject, setName,
+    upsertItem, saveCard, moveCard, toggleDone, deleteItem, deleteItems, saveAreas, setCalendarArea, setCalendarShown, saveProject, setName,
     uploadAttachment, removeAttachment, attachmentUrl,
     saveList, deleteList, promoteListItem,
     saveRecipe, deleteRecipe, setMeal, clearMeal, saveGrocery, deleteGrocery, clearTickedGroceries, addWeekToGroceries, addRecipeToGroceries,

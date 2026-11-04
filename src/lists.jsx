@@ -3,24 +3,22 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { uid, listsOf } from './model.js';
 import { useDragSort } from './drag.js';
-import { Icon, ConfirmButton } from './ui.jsx';
+import { Icon, ConfirmButton, projectStyle, areaStyle, ProjectIcon } from './ui.jsx';
 import { DragGhost } from './projects.jsx';
 
 const COLLAPSE_KEY = 'hub.listsCollapsed';
 const loadCollapsed = () => { try { return JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '{}'); } catch { return {}; } };
 
-export function ProjectLists({ hub, project, onOpenCard, openNew = 0 }) {
+// "Add checklist" sits under "Add section" on the project page; the checklists column only
+// appears once there is one.
+export function addChecklist(hub, project, name) {
+  const lists = listsOf(hub.data.settings, project.id);
+  hub.saveList({ id: 'l-' + uid(), projectId: project.id, name, items: [], order: lists.length ? Math.max(...lists.map((l) => l.order ?? 0)) + 1 : 0 });
+}
+
+export function ProjectLists({ hub, project, onOpenCard }) {
   const lists = listsOf(hub.data.settings, project.id);
   const [collapsed, setCollapsedState] = useState(loadCollapsed);
-  const [adding, setAdding] = useState(false);
-  const [newName, setNewName] = useState('');
-  const sectionRef = useRef(null);
-  // "+ Checklist" at the top of the project opens the name box here and brings it into view.
-  useEffect(() => {
-    if (!openNew) return;
-    setAdding(true);
-    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [openNew]);
   const setCollapsed = (id, v) => {
     const next = { ...collapsed, [id]: v };
     setCollapsedState(next);
@@ -51,36 +49,91 @@ export function ProjectLists({ hub, project, onOpenCard, openNew = 0 }) {
     },
   });
 
-  const createList = () => {
-    const name = newName.trim();
-    if (!name) { setAdding(false); return; }
-    hub.saveList({ id: 'l-' + uid(), projectId: project.id, name, items: [], order: lists.length ? Math.max(...lists.map((l) => l.order ?? 0)) + 1 : 0 });
-    setNewName('');
-    setAdding(false);
-  };
-
   return (
-    <section className="plists" ref={sectionRef} aria-labelledby={`plists-${project.id}`}>
+    <section className="plists" aria-labelledby={`plists-${project.id}`}>
       <div className="plists-head">
         <h2 id={`plists-${project.id}`} className="plists-title"><span className="hl-text">Checklists</span></h2>
-        {!adding && <button className="text-btn small" onClick={() => setAdding(true)}><Icon name="plus" size={14} />New checklist</button>}
       </div>
-      {adding && (
-        <div className="plist-new">
-          <input autoFocus value={newName} placeholder="Checklist name, e.g. Packing" aria-label="New checklist name"
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); createList(); } if (e.key === 'Escape') { setAdding(false); setNewName(''); } }}
-            onBlur={createList} />
-        </div>
-      )}
-      {!lists.length && !adding && (
-        <p className="plists-empty">Keep simple checklists here, like packing or documents to bring.</p>
-      )}
       {lists.map((l) => (
         <ListBlock key={l.id} hub={hub} list={l} collapsed={!!collapsed[l.id]} onCollapse={(v) => setCollapsed(l.id, v)}
           drag={drag} onPointerDown={onPointerDown} rowsFor={rowsFor} onOpenCard={onOpenCard} />
       ))}
       <DragGhost drag={drag} />
+    </section>
+  );
+}
+
+// The To-do page shows every project's checklists at a glance, just above the matrix: how far
+// along each one is and the next few things on it, which can be ticked off right there.
+// Grouped by area (Work, Study, Travel...), in the order the areas are set.
+export function ChecklistGlance({ hub, projects, areas = [], project = '', hiddenAreas, onOpenProject }) {
+  if (project === 'none') return null;
+  const byId = Object.fromEntries(projects.map((p) => [p.id, p]));
+  const lists = (hub.data.settings?.lists || [])
+    .filter((l) => !l.deleted && byId[l.projectId] && !byId[l.projectId].archived && !hiddenAreas?.has(byId[l.projectId].area || 'none'))
+    .filter((l) => !project || l.projectId === project)
+    .sort((a, b) => projects.indexOf(byId[a.projectId]) - projects.indexOf(byId[b.projectId]) || (a.order ?? 0) - (b.order ?? 0));
+  if (!lists.length) return null;
+  const tick = (list, id) => hub.saveList({ ...list, items: list.items.map((i) => (i.id === id ? { ...i, done: !i.done } : i)) });
+  const areaOf = (l) => byId[l.projectId].area || 'none';
+  const order = [...areas.map((a) => a.id), 'none'];
+  const groups = [...new Set(lists.map(areaOf))]
+    .sort((a, b) => (order.indexOf(a) + 1 || order.length + 1) - (order.indexOf(b) + 1 || order.length + 1))
+    .map((id) => ({ id, area: areas.find((a) => a.id === id), lists: lists.filter((l) => areaOf(l) === id) }));
+  return (
+    <section className="glance" aria-labelledby="glance-title">
+      <h2 id="glance-title" className="glance-title">Checklists</h2>
+      <div className="glance-row">
+        {groups.map((g) => (
+          <div key={g.id} className="glance-group" role="group" aria-label={g.area?.name || 'No area'} style={areaStyle(g.area)}>
+            <h3 className="glance-area"><span className="area-swatch" aria-hidden="true" />{g.area?.name || 'No area'}</h3>
+            <ul className="glance-tiles">
+              {/* one card per project; its checklists sit side by side, split by a line */}
+              {[...new Set(g.lists.map((l) => l.projectId))].map((pid) => {
+                const p = byId[pid];
+                const own = g.lists.filter((l) => l.projectId === pid);
+                return (
+                  <li key={pid} className="glance-tile" style={projectStyle(p)}>
+                    <button className="glance-proj" onClick={() => onOpenProject?.(p.id)} aria-label={`${p.name}: open project`}>
+                      <ProjectIcon project={p} size={13} />{p.name}
+                    </button>
+                    <div className="glance-lists">
+                      {own.map((l) => {
+                        const items = l.items || [];
+                        const done = items.filter((i) => i.done).length;
+                        const next = items.filter((i) => !i.done);
+                        return (
+                          <div key={l.id} className="glance-list" data-complete={items.length && !next.length ? '' : undefined}>
+                            <div className="glance-head">
+                              <span className="glance-name">{l.name}</span>
+                              <span className="glance-count" aria-label={`${done} of ${items.length} done`}>{done}/{items.length}</span>
+                            </div>
+                            {items.length > 0 && <span className="plist-bar" aria-hidden="true"><span style={{ width: `${(done / items.length) * 100}%` }} /></span>}
+                            {next.length ? (
+                              <ul className="glance-items">
+                                {next.slice(0, 3).map((i) => (
+                                  <li key={i.id}>
+                                    <button className="glance-item" onClick={() => tick(l, i.id)} aria-label={`Tick off ${i.text}`}>
+                                      <span className="glance-box" aria-hidden="true" />{i.text}
+                                    </button>
+                                  </li>
+                                ))}
+                                {next.length > 3 && <li className="glance-more">+{next.length - 3} more</li>}
+                              </ul>
+                            ) : (
+                              <p className="glance-empty">{items.length ? 'All ticked off' : 'Nothing on it yet'}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

@@ -1,6 +1,6 @@
 // Keeps the app and its typeface available offline. Your data is never cached
 // here: it lives in the app's own storage and syncs with GitHub directly.
-const CACHE = 'plans-31cf4859ad';
+const CACHE = 'plans-857bb4ca71';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './apple-touch-icon.png', './fonts/dm-sans.woff2', './fonts/dm-sans-italic.woff2', './fonts/instrument-serif-normal.woff2', './fonts/instrument-serif-italic.woff2', './fonts/caveat.woff2'];
 
 // GitHub Pages lets browsers reuse files for 10 minutes, so fetch past that cache:

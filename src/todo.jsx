@@ -5,6 +5,7 @@ import { QUADRANTS, todayKey, dateKey, uid, sortEntries, covers, addDays, startO
 import { useDragSort, dropOrder } from './drag.js';
 import { Icon, Mark, entryGlyph, areaColor, areaStyle, projectStyle, ProjectIcon, shortDate, dayDate, time12 } from './ui.jsx';
 import { DragGhost, InlineAdd, cardGlyph } from './projects.jsx';
+import { ChecklistGlance } from './lists.jsx';
 
 export function useWide(query = '(min-width: 900px)') {
   const [wide, setWide] = useState(() => typeof matchMedia !== 'undefined' && matchMedia(query).matches);
@@ -186,6 +187,8 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, onNewTas
       <Greeting name={hub.data.settings.name} />
       <Bento entries={entries} items={items} projects={projects} areasById={areasById}
         onOpenDay={onOpenDay} onOpenWeek={onOpenWeek} onOpenProject={onOpenProject} />
+
+      <ChecklistGlance hub={hub} projects={projects} areas={areas} project={proj} hiddenAreas={hidden} onOpenProject={onOpenProject} />
 
       {/* one "Add task" for the whole matrix, so the cards don't each carry a button at a different height.
           It opens the task sheet with the filtered project, and the quadrant when one is open full screen. */}

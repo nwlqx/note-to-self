@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { normKind, listsOf, sectionOf, orderBetween, newProject, fallbackHue, PROJECT_HUES, PROJECT_ICONS, areaIcon, hueOf, todayKey, addDays, sortEntries, isOpenTask, uid } from './model.js';
 import { useDragSort, dropOrder } from './drag.js';
 import { DueStrip } from './calendar.jsx';
-import { liveExpenses, sgdOf, money } from './money.js';
+import { liveExpenses, liveCategories, sgdOf, money } from './money.js';
 import { ProjectLists, addChecklist } from './lists.jsx';
 import { Icon, EntryRow, areaColor, areaStyle, projectStyle, ProjectIcon, dayDate, shortDate, rangeLabel, metaFor, Sheet, Mark, ConfirmButton } from './ui.jsx';
 
@@ -14,7 +14,6 @@ const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0) || (a.createdAt || '')
 export function ProjectsOverview({ hub, areas, projects, entries, areasById, onOpenProject, onOpen, onToggle, onNewProject, onAddCard }) {
   const items = hub.data.items.items;
   const [showArchived, setShowArchived] = useState(false);
-  const [only, setOnly] = useState('all');
   const archived = projects.filter((p) => p.archived);
 
   return (
@@ -23,46 +22,36 @@ export function ProjectsOverview({ hub, areas, projects, entries, areasById, onO
 
       <DueStrip entries={entries} areasById={areasById} projects={projects} onOpen={onOpen} onToggle={onToggle} />
 
-      <div className="filters" role="radiogroup" aria-label="Show projects from">
-        <button className="chip chip-plain" role="radio" aria-checked={only === 'all'} aria-pressed={only === 'all'} onClick={() => setOnly('all')}>
-          All<span className="chip-count">{projects.filter((p) => !p.archived).length}</span>
-        </button>
-        {areas.map((a) => (
-          <button key={a.id} className="chip" role="radio" aria-checked={only === a.id} aria-pressed={only === 'all' || only === a.id}
-            style={areaStyle(a)} onClick={() => setOnly(only === a.id ? 'all' : a.id)}>
-            <span className="chip-dot" />{a.name}<span className="chip-count">{projects.filter((p) => p.area === a.id && !p.archived).length}</span>
-          </button>
-        ))}
-      </div>
-
-      {areas.filter((a) => only === 'all' || only === a.id).map((a) => {
+      <h2 className="glance-title projects-all-title">All projects</h2>
+      {areas.map((a) => {
         const list = projects.filter((p) => p.area === a.id && !p.archived);
         const loose = sortEntries(entries.filter((e) => e.source === 'item' && !e.projectId && e.area === a.id && !e.done));
         return (
           <section key={a.id} className="area-block" style={areaStyle(a)}>
             <div className="area-head">
-              <h2>{areaIcon(a)
-                ? <span className="area-icon" aria-hidden="true"><Icon name={areaIcon(a)} size={18} /></span>
-                : <span className="area-swatch" aria-hidden="true" />}<span className="hl-text">{a.name}</span></h2>
+              <h2 className="area-tab">{areaIcon(a) && <span className="area-icon" aria-hidden="true"><Icon name={areaIcon(a)} size={18} /></span>}{a.name}</h2>
               <button className="text-btn small add-inline" aria-label={`New project in ${a.name}`} onClick={() => onNewProject(a.id)}><Icon name="plus" size={14} />Add</button>
             </div>
-            {list.length === 0 && loose.length === 0 && (
-              <p className="month-empty">No projects yet</p>
-            )}
-            <ul className="project-list">
-              {list.map((p) => <ProjectRow key={p.id} project={p} area={a} cards={cardsOf(items, p.id)} listItems={listsOf(hub.data.settings, p.id).flatMap((l) => l.items || [])} onOpen={() => onOpenProject(p.id)} />)}
-            </ul>
-            {loose.length > 0 && (
-              <div className="loose">
-                <h3 className="quiet-head">Not in a project</h3>
-                <ul className="entries">
-                  {loose.map((e) => (
-                    <EntryRow key={e.key} entry={e} areasById={areasById} onToggle={onToggle} onOpen={onOpen}
-                      meta={metaFor(e, { showDate: true })} />
-                  ))}
-                </ul>
-              </div>
-            )}
+            {/* the area's tab and this panel are one folder shape, holding its projects */}
+            <div className="area-panel">
+              {list.length === 0 && loose.length === 0 && (
+                <p className="month-empty">No projects yet</p>
+              )}
+              <ul className="project-list">
+                {list.map((p) => <ProjectRow key={p.id} project={p} area={a} cards={cardsOf(items, p.id)} listItems={listsOf(hub.data.settings, p.id).flatMap((l) => l.items || [])} onOpen={() => onOpenProject(p.id)} />)}
+              </ul>
+              {loose.length > 0 && (
+                <div className="loose">
+                  <h3 className="quiet-head">Not in a project</h3>
+                  <ul className="entries">
+                    {loose.map((e) => (
+                      <EntryRow key={e.key} entry={e} areasById={areasById} onToggle={onToggle} onOpen={onOpen}
+                        meta={metaFor(e, { showDate: true })} />
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </section>
         );
       })}
@@ -89,7 +78,8 @@ function ProjectRow({ project, cards, listItems = [], onOpen, area }) {
   const next = cards.filter((c) => !c.done && c.date).sort((a, b) => a.date.localeCompare(b.date))[0];
   const late = next && next.date < todayKey();
   return (
-    <li style={projectStyle(project, area)}>
+    // on the Projects page a project takes its area's colour, so it matches the area's tab above it
+    <li style={area ? areaStyle(area) : projectStyle(project)}>
       <button className="project-row" onClick={onOpen}>
         <span className="project-top">
           <span className="project-name"><ProjectIcon project={project} size={24} /><span className="project-name-text">{project.name}</span></span>
@@ -115,7 +105,7 @@ function ProjectRow({ project, cards, listItems = [], onOpen, area }) {
 const layoutKey = (id) => `hub.layout.${id}`;
 const loadLayout = (id) => { try { return localStorage.getItem(layoutKey(id)) || 'board'; } catch { return 'board'; } };
 
-export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEditProject, onOpenSpending }) {
+export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEditProject, onOpenSpending, onLogSpending }) {
   const [layout, setLayoutState] = useState(() => loadLayout(project.id));
   const setLayout = (l) => { setLayoutState(l); try { localStorage.setItem(layoutKey(project.id), l); } catch { /* ignore */ } };
   const area = areasById[project.area];
@@ -131,6 +121,7 @@ export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEdi
   }, [cards, project]);
 
   const hasLists = listsOf(hub.data.settings, project.id).length > 0;
+  const hasBudget = project.budget > 0;
 
   const addCard = (section, title) => {
     const list = bySection[section] || [];
@@ -144,9 +135,12 @@ export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEdi
     <section className={`view project layout-${layout}`} aria-label={project.name} style={projectStyle(project, area)}>
       <header className="proj-header">
         <button className="back" onClick={onBack}><Icon name="left" size={18} />Projects</button>
+        {/* the area's folder tab, sitting on the folder's top edge */}
+        <div className="project-area-row" style={areaStyle(area)}>
+          <p className="project-area area-tab">{area && areaIcon(area) && <Icon name={areaIcon(area)} size={14} />}{area?.name || 'No area'}{project.archived ? ', archived' : ''}</p>
+        </div>
         <div className="project-title-row">
           <div>
-            <p className="project-area"><span className="area-swatch" aria-hidden="true" />{area?.name || 'No area'}{project.archived ? ', archived' : ''}</p>
             <h1><ProjectIcon project={project} size={30} />{project.name}</h1>
             <SpendPill hub={hub} project={project} onOpen={onOpenSpending} />
           </div>
@@ -160,7 +154,7 @@ export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEdi
         </div>
       </header>
 
-      <div className={`proj-body${hasLists ? ' has-lists' : ''}`}>
+      <div className={`proj-body${hasLists || hasBudget ? ' has-side' : ''}`}>
         <div className="proj-main">
           {layout === 'board' ? (
             <Board hub={hub} project={project} bySection={bySection} onOpenCard={onOpenCard} onAdd={addCard} />
@@ -168,7 +162,71 @@ export function ProjectView({ hub, project, areasById, onBack, onOpenCard, onEdi
             <ListLayout hub={hub} project={project} bySection={bySection} area={area} onOpenCard={onOpenCard} onAdd={addCard} />
           )}
         </div>
-        {hasLists && <ProjectLists hub={hub} project={project} onOpenCard={onOpenCard} />}
+        {(hasLists || hasBudget) && (
+          <div className="proj-side">
+            {hasBudget && <ProjectBudget hub={hub} project={project} onOpenSpending={onOpenSpending} onLogSpending={onLogSpending} />}
+            {hasLists && <ProjectLists hub={hub} project={project} onOpenCard={onOpenCard} />}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// The project's budget. It's the same budget and spending the Budgeting page shows for this
+// project, so anything logged here appears there too, and the other way round.
+// '' or 0 removes the budget, which hides the panel.
+function setBudget(hub, project, value) {
+  const n = Number(String(value).replace(/[^\d.]/g, ''));
+  const cur = hub.data.settings.projects.find((x) => x.id === project.id) || project;
+  hub.saveProject({ ...cur, budget: n > 0 ? n : undefined });
+}
+
+function ProjectBudget({ hub, project, onOpenSpending, onLogSpending }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState('');
+  const xs = liveExpenses(hub.data.money).filter((x) => x.projectId === project.id)
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const cats = Object.fromEntries(liveCategories(hub.data.money).map((c) => [c.id, c]));
+  const spent = xs.reduce((s, x) => s + sgdOf(x), 0);
+  const left = project.budget - spent;
+  const commit = () => { setEditing(false); setBudget(hub, project, value); };
+  return (
+    <section className="pbudget" aria-labelledby={`pbudget-${project.id}`}>
+      <div className="plists-head">
+        <h2 id={`pbudget-${project.id}`} className="plists-title"><span className="hl-text">Budget</span></h2>
+        <button className="text-btn small" onClick={onOpenSpending}>See all</button>
+      </div>
+      <div className="plist pbudget-card">
+        <div className="pbudget-sum">
+          <span className="pbudget-spent">{money(spent)}</span>
+          {editing ? (
+            <input className="pbudget-input" autoFocus inputMode="decimal" value={value} aria-label="Budget in Singapore dollars, empty to remove"
+              onChange={(e) => setValue(e.target.value.replace(/[^\d.]/g, ''))} onBlur={commit}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); } if (e.key === 'Escape') setEditing(false); }} />
+          ) : (
+            <button className="pbudget-of" onClick={() => { setValue(String(project.budget)); setEditing(true); }} title="Change the budget">
+              of {money(project.budget)}
+            </button>
+          )}
+        </div>
+        <span className="plist-bar" data-over={left < 0 || undefined} aria-hidden="true"><span style={{ width: `${Math.min(100, (spent / project.budget) * 100)}%` }} /></span>
+        <p className={`pbudget-left${left < 0 ? ' m-over' : ''}`}>{left < 0 ? `${money(-left)} over` : `${money(left)} left`}</p>
+        {xs.length > 0 && (
+          <ul className="pbudget-list">
+            {xs.slice(0, 4).map((x) => (
+              <li key={x.id}>
+                <button className="pbudget-row" onClick={() => onLogSpending?.(x.id)}>
+                  <span className="pbudget-what">{x.note || cats[x.category]?.name || 'Spending'}</span>
+                  <span className="pbudget-date">{shortDate(x.date)}</span>
+                  <span className="pbudget-amt">{money(sgdOf(x))}</span>
+                </button>
+              </li>
+            ))}
+            {xs.length > 4 && <li><button className="glance-more" onClick={onOpenSpending}>+{xs.length - 4} more</button></li>}
+          </ul>
+        )}
+        <button className="inline-add pbudget-log" onClick={() => onLogSpending?.()}><Icon name="plus" size={16} /><span>Log spending</span></button>
       </div>
     </section>
   );
@@ -191,7 +249,7 @@ function SpendPill({ hub, project, onOpen }) {
 
 // `extra` adds an optional second box: 'price' passes a number to onAdd ('' when left empty),
 // 'date' passes a YYYY-MM-DD due date ('' when left empty).
-export function InlineAdd({ onAdd, label = 'Add card', ariaLabel = label, placeholder = 'Card title', extra = '' }) {
+export function InlineAdd({ onAdd, label = 'Add card', ariaLabel = label, placeholder = 'Card title', extra = '', inputMode }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const [second, setSecond] = useState('');
@@ -219,7 +277,7 @@ export function InlineAdd({ onAdd, label = 'Add card', ariaLabel = label, placeh
     // Moving between the two boxes isn't leaving the form, so only submit when focus goes elsewhere.
     <div className="inline-add-form" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) { submit(); setOpen(false); } }}>
       <div className={extra ? 'inline-add-row' : undefined}>
-        <input ref={nameRef} autoFocus value={text} placeholder={placeholder} aria-label={placeholder}
+        <input ref={nameRef} autoFocus value={text} placeholder={placeholder} aria-label={placeholder} inputMode={inputMode}
           onChange={(e) => setText(e.target.value)} onKeyDown={onKeyDown} />
         {extra === 'price' && (
           <input className="inline-add-price" type="text" inputMode="decimal" value={second} placeholder="Price" aria-label="Rough price (optional)"
@@ -306,6 +364,7 @@ function Board({ hub, project, bySection, onOpenCard, onAdd }) {
         <div className="column column-add">
           <InlineAdd label="Add section" placeholder="Section name" onAdd={(name) => addSection(hub, project, name)} />
           <InlineAdd label="Add checklist" placeholder="Checklist name, e.g. Packing" onAdd={(name) => addChecklist(hub, project, name)} />
+          {!(project.budget > 0) && <InlineAdd label="Add budget" placeholder="Budget in S$, e.g. 3500" inputMode="decimal" onAdd={(v) => setBudget(hub, project, v)} />}
         </div>
       </div>
       <DragGhost drag={drag} />
@@ -358,6 +417,7 @@ function ListLayout({ hub, project, bySection, area, onOpenCard, onAdd }) {
       <div className="list-section list-section-add">
         <InlineAdd label="Add section" placeholder="Section name" onAdd={(name) => addSection(hub, project, name)} />
         <InlineAdd label="Add checklist" placeholder="Checklist name, e.g. Packing" onAdd={(name) => addChecklist(hub, project, name)} />
+        {!(project.budget > 0) && <InlineAdd label="Add budget" placeholder="Budget in S$, e.g. 3500" inputMode="decimal" onAdd={(v) => setBudget(hub, project, v)} />}
       </div>
     </div>
   );

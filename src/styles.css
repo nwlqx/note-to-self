@@ -449,7 +449,7 @@ legend { font-size: var(--text-md); color: var(--ink-soft); margin-bottom: var(-
 
 /* ---------- project view ---------- */
 .content-wide { max-width: none; }
-.proj-header { max-width: 44rem; margin-bottom: var(--s4); }
+.proj-header { margin-bottom: var(--s4); } /* full width, so the area line and the tools reach the right edge like the board below */
 .back { display: inline-flex; align-items: center; gap: var(--s1); min-height: var(--control-lg); color: var(--ink-soft); margin-left: -6px; }
 .back:hover { color: var(--ink); }
 .project-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; }
@@ -1783,10 +1783,11 @@ button.all-day-mark:hover { background: var(--surface); }
 
 /* ---------- project lists ---------- */
 .proj-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); }
-.proj-body .plists { order: -1; }
+.proj-body .proj-side { order: -1; }
+.proj-side { display: flex; flex-direction: column; gap: var(--s5); min-width: 0; }
 @media (min-width: 1100px) {
-  .proj-body.has-lists { grid-template-columns: minmax(0, 1fr) 20rem; gap: var(--s6); align-items: start; }
-  .proj-body .plists { order: 0; }
+  .proj-body.has-side { grid-template-columns: minmax(0, 1fr) 20rem; gap: var(--s6); align-items: start; }
+  .proj-body .proj-side { order: 0; }
 }
 .plists { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; }
 .plists-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
@@ -2760,6 +2761,7 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
 /* ---------- checklists at a glance (To-do page, above the matrix) ---------- */
 .glance { margin: calc(var(--gap-section) - 16px) 0 0; --hl: var(--lavender); } /* checklists live in projects, so they take the Projects colour */
 .glance + .todo-head { margin-top: var(--s6); } /* the filter and Add task sit right above the matrix */
+.projects-all-title { margin-top: var(--s6); background-image: none; } /* a plain heading: the folders below carry the colour */
 .glance-title { font-family: var(--font-display); font-weight: 400; font-size: var(--text-3xl); line-height: 1.1; margin: 0 0 var(--s3) 4px; }
 .glance-row { display: flex; gap: var(--s5); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 2px; }
 .glance-group { flex: none; display: flex; flex-direction: column; gap: 10px; }
@@ -2770,6 +2772,9 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
   scroll-snap-align: start; display: flex; flex-direction: column; gap: 6px; min-width: 0;
   background: var(--surface); border-radius: var(--radius-lg); box-shadow: inset 0 0 0 1px var(--line); padding: var(--s2) var(--s3) var(--s2);
 }
+.glance-tile { cursor: pointer; transition: box-shadow .15s var(--ease-2); }
+.glance-tile:hover { box-shadow: inset 0 0 0 1px var(--rule-strong); }
+@media (prefers-reduced-motion: reduce) { .glance-tile { transition: none; } }
 .glance-proj { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; max-width: 100%; padding: 2px 0; font-size: var(--text-xs); font-weight: 600; color: var(--c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .glance-proj:hover { text-decoration: underline; text-underline-offset: 3px; }
 .glance-lists { display: flex; flex: 1; }
@@ -2785,4 +2790,46 @@ li[data-done] .cell-title, .all-day li[data-done] .all-day-body, .m-row[data-don
 .glance-item { display: flex; align-items: center; gap: var(--s2); width: 100%; min-height: var(--control-xs); text-align: left; font-size: var(--text-sm); color: inherit; border-radius: var(--radius-sm); }
 .glance-item:hover .glance-box { box-shadow: inset 0 0 0 1.5px var(--c); }
 .glance-box { width: 14px; height: 14px; flex: none; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--rule-strong); }
+.glance-more:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.glance-more { text-align: left; }
 .glance-more, .glance-empty { margin: 0; font-size: var(--text-xs); color: var(--ink-soft); padding: 4px 0 2px; }
+
+/* ---------- areas as notebook folders ----------
+   An area is a folder: a tab with its name joined to a panel in the same soft colour that
+   holds everything in it (Projects page, and the checklists on Home). */
+.area-tab {
+  display: inline-flex; align-items: center; gap: 8px; width: auto; margin: 0;
+  background: var(--cs); color: var(--c); border-radius: 12px 12px 0 0;
+}
+.area-head { align-items: flex-end; border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
+.area-head h2.area-tab { background-image: none; padding: 7px 16px 4px 14px; margin-inline-start: 0; }
+.area-head .area-tab .area-icon { width: auto; height: auto; background: none; color: inherit; border-radius: 0; }
+.area-head .add-inline { margin-bottom: 6px; }
+.area-panel { background: var(--cs); border-radius: 0 var(--radius-xl) var(--radius-xl) var(--radius-xl); padding: var(--s3); }
+.area-panel .month-empty { margin: 0; padding: var(--s2) 4px; }
+.area-panel .loose { margin-top: var(--s3); }
+/* on a project's own page there's no folder to sit on, so the area is a plain pill in its colour */
+.project-area-row { margin: 0 0 var(--s2); }
+p.project-area.area-tab { display: inline-flex; padding: 4px 12px; border-radius: var(--radius-pill); font-style: normal; font-weight: 600; font-size: var(--text-xs); color: var(--c); gap: 6px; }
+.glance-group { gap: 0; }
+.glance-area.area-tab { align-self: flex-start; padding: 5px 12px 3px; border-radius: 10px 10px 0 0; font-size: var(--text-xs); font-weight: 600; }
+.glance-tiles { background: var(--cs); border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg); padding: var(--s2); }
+
+/* ---------- a project's budget (same data as the Budgeting page) ---------- */
+.pbudget { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; }
+.pbudget-card { padding: var(--s3) var(--s3) var(--s2); display: flex; flex-direction: column; }
+.pbudget-sum { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+.pbudget-spent { font-family: var(--font-display); font-size: var(--text-3xl); line-height: 1.1; }
+.pbudget-of { font-size: var(--text-sm); color: var(--ink-soft); text-decoration: underline dotted; text-underline-offset: 3px; }
+.pbudget-of:hover { color: var(--ink); }
+.pbudget-input { width: 8rem; min-height: var(--control-sm); font-size: var(--text-sm); }
+.pbudget-card .plist-bar { margin: var(--s2) 0 4px; }
+.pbudget-card .plist-bar[data-over] span { background: var(--danger); }
+.pbudget-left { margin: 0 0 var(--s2); font-size: var(--text-xs); color: var(--ink-soft); }
+.pbudget-list { display: flex; flex-direction: column; border-top: 1px solid var(--line); padding-top: 4px; }
+.pbudget-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; gap: var(--s2); width: 100%; min-height: var(--control-sm); text-align: left; color: inherit; font-size: var(--text-sm); border-radius: var(--radius-sm); }
+.pbudget-row:hover .pbudget-what { text-decoration: underline; text-underline-offset: 3px; }
+.pbudget-what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pbudget-date { font-size: var(--text-xs); color: var(--ink-soft); }
+.pbudget-amt { font-variant-numeric: tabular-nums; }
+.pbudget-log { align-self: flex-start; min-height: var(--control-sm); margin-top: 4px; }

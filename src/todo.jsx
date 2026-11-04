@@ -183,7 +183,7 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, onNewTas
   const trayShown = showAllTray || drag ? trayRows.rows : trayRows.rows.slice(0, 8);
 
   return (
-    <section className="view todo" aria-label="To-do">
+    <section className="view todo" aria-label="Home">
       <Greeting name={hub.data.settings.name} />
       <Bento entries={entries} items={items} projects={projects} areasById={areasById}
         onOpenDay={onOpenDay} onOpenWeek={onOpenWeek} onOpenProject={onOpenProject} />

@@ -86,14 +86,16 @@ export function ChecklistGlance({ hub, projects, areas = [], project = '', hidde
       <div className="glance-row">
         {groups.map((g) => (
           <div key={g.id} className="glance-group" role="group" aria-label={g.area?.name || 'No area'} style={areaStyle(g.area)}>
-            <h3 className="glance-area"><span className="area-swatch" aria-hidden="true" />{g.area?.name || 'No area'}</h3>
+            <h3 className="glance-area area-tab">{g.area?.name || 'No area'}</h3>
             <ul className="glance-tiles">
               {/* one card per project; its checklists sit side by side, split by a line */}
               {[...new Set(g.lists.map((l) => l.projectId))].map((pid) => {
                 const p = byId[pid];
                 const own = g.lists.filter((l) => l.projectId === pid);
                 return (
-                  <li key={pid} className="glance-tile" style={projectStyle(p)}>
+                  // tapping anywhere on the card opens the project; ticking an item stays here
+                  <li key={pid} className="glance-tile" style={projectStyle(p)}
+                    onClick={(e) => !e.target.closest('button') && onOpenProject?.(p.id)}>
                     <button className="glance-proj" onClick={() => onOpenProject?.(p.id)} aria-label={`${p.name}: open project`}>
                       <ProjectIcon project={p} size={13} />{p.name}
                     </button>
@@ -118,7 +120,9 @@ export function ChecklistGlance({ hub, projects, areas = [], project = '', hidde
                                     </button>
                                   </li>
                                 ))}
-                                {next.length > 3 && <li className="glance-more">+{next.length - 3} more</li>}
+                                {next.length > 3 && (
+                                  <li><button className="glance-more" onClick={() => onOpenProject?.(p.id)} aria-label={`${next.length - 3} more in ${l.name}: open ${p.name}`}>+{next.length - 3} more</button></li>
+                                )}
                               </ul>
                             ) : (
                               <p className="glance-empty">{items.length ? 'All ticked off' : 'Nothing on it yet'}</p>

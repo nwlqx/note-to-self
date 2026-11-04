@@ -43,7 +43,7 @@ function SyncNote({ hub }) {
 }
 
 const TABS = [
-  { id: 'todo', label: 'To-do', icon: 'todo' },
+  { id: 'todo', label: 'Home', icon: 'home' },
   { id: 'calendar', label: 'Calendar', icon: 'calendar' },
   { id: 'projects', label: 'Projects', icon: 'folder' },
   { id: 'money', label: 'Budgeting', icon: 'wallet' },
@@ -258,7 +258,8 @@ export default function App() {
           <ProjectView hub={hub} project={currentProject} areasById={areasById}
             onBack={() => setView({ name: 'projects' })} onOpenCard={openCard}
             onEditProject={() => setSheet({ type: 'project', project: currentProject })}
-            onOpenSpending={() => setSheet({ type: 'spending', projectId: currentProject.id })} />
+            onOpenSpending={() => setSheet({ type: 'spending', projectId: currentProject.id })}
+            onLogSpending={(id) => setSheet({ type: 'expense', ...(id ? { id } : { defaults: { projectId: currentProject.id } }) })} />
         )}
         {view.name === 'calendar' && (
           <CalendarPage {...props} calendars={calendarsOf(hub.data.calendar).map((c) => ({ ...c, area: areasById[settings.calendarAreas?.[c.id]], shown: !(settings.hiddenCalendars || []).includes(c.id) }))}

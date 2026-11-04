@@ -63,10 +63,43 @@ export function ProjectLists({ hub, project, onOpenCard }) {
   );
 }
 
-// The To-do page shows every project's checklists at a glance, just above the matrix: how far
-// along each one is and the next few things on it, which can be ticked off right there.
-// Grouped by area (Work, Study, Travel...), in the order the areas are set.
-export function ChecklistGlance({ hub, projects, areas = [], project = '', hiddenAreas, onOpenProject }) {
+// One checklist: how far along it is and the next few things on it, which can be ticked off in place.
+function GlanceList({ l, p, tick, onOpenProject }) {
+  const items = l.items || [];
+  const done = items.filter((i) => i.done).length;
+  const next = items.filter((i) => !i.done);
+  return (
+    <div className="glance-list" data-complete={items.length && !next.length ? '' : undefined}>
+      <div className="glance-head">
+        <span className="glance-name">{l.name}</span>
+        <span className="glance-count" aria-label={`${done} of ${items.length} done`}>{done}/{items.length}</span>
+      </div>
+      {items.length > 0 && <span className="plist-bar" aria-hidden="true"><span style={{ width: `${(done / items.length) * 100}%` }} /></span>}
+      {next.length ? (
+        <ul className="glance-items">
+          {next.slice(0, 3).map((i) => (
+            <li key={i.id}>
+              <button className="glance-item" onClick={() => tick(l, i.id)} aria-label={`Tick off ${i.text}`}>
+                <span className="glance-box" aria-hidden="true" />{i.text}
+              </button>
+            </li>
+          ))}
+          {next.length > 3 && (
+            <li><button className="glance-more" onClick={() => onOpenProject?.(p.id)} aria-label={`${next.length - 3} more in ${l.name}: open ${p.name}`}>+{next.length - 3} more</button></li>
+          )}
+        </ul>
+      ) : (
+        <p className="glance-empty">{items.length ? 'All ticked off' : 'Nothing on it yet'}</p>
+      )}
+    </div>
+  );
+}
+
+// The To-do page shows every project's checklists at a glance: on wide screens as a card beside
+// Today and Due today (`card`, scrolls when there are many), otherwise as a section above the matrix.
+// The section groups by area (Work, Study, Travel...), in the order the areas are set; the card
+// groups by project.
+export function ChecklistGlance({ hub, projects, areas = [], project = '', hiddenAreas, onOpenProject, onOpenProjects, card = false }) {
   if (project === 'none') return null;
   const byId = Object.fromEntries(projects.map((p) => [p.id, p]));
   const lists = (hub.data.settings?.lists || [])
@@ -75,6 +108,29 @@ export function ChecklistGlance({ hub, projects, areas = [], project = '', hidde
     .sort((a, b) => projects.indexOf(byId[a.projectId]) - projects.indexOf(byId[b.projectId]) || (a.order ?? 0) - (b.order ?? 0));
   if (!lists.length) return null;
   const tick = (list, id) => hub.saveList({ ...list, items: list.items.map((i) => (i.id === id ? { ...i, done: !i.done } : i)) });
+  if (card) {
+    return (
+      <div className="tile tile-lists">
+        <button className="due-head" onClick={() => onOpenProjects?.()}>
+          <span className="tile-label">Checklists</span>
+          <span className="tile-arrow" aria-hidden="true"><Icon name="arrow" size={18} /></span>
+        </button>
+        <div className="lists-body" role="region" aria-label="All checklists" tabIndex={0}>
+          {[...new Set(lists.map((l) => l.projectId))].map((pid) => {
+            const p = byId[pid];
+            return (
+              <section key={pid} className="lists-proj-group" style={projectStyle(p)}>
+                <button className="glance-proj" onClick={() => onOpenProject?.(p.id)} aria-label={`${p.name}: open project`}>
+                  <ProjectIcon project={p} size={13} />{p.name}
+                </button>
+                {lists.filter((l) => l.projectId === pid).map((l) => <GlanceList key={l.id} l={l} p={p} tick={tick} onOpenProject={onOpenProject} />)}
+              </section>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
   const areaOf = (l) => byId[l.projectId].area || 'none';
   const order = [...areas.map((a) => a.id), 'none'];
   const groups = [...new Set(lists.map(areaOf))]
@@ -91,7 +147,6 @@ export function ChecklistGlance({ hub, projects, areas = [], project = '', hidde
               {/* one card per project; its checklists sit side by side, split by a line */}
               {[...new Set(g.lists.map((l) => l.projectId))].map((pid) => {
                 const p = byId[pid];
-                const own = g.lists.filter((l) => l.projectId === pid);
                 return (
                   // tapping anywhere on the card opens the project; ticking an item stays here
                   <li key={pid} className="glance-tile" style={projectStyle(p)}
@@ -100,36 +155,7 @@ export function ChecklistGlance({ hub, projects, areas = [], project = '', hidde
                       <ProjectIcon project={p} size={13} />{p.name}
                     </button>
                     <div className="glance-lists">
-                      {own.map((l) => {
-                        const items = l.items || [];
-                        const done = items.filter((i) => i.done).length;
-                        const next = items.filter((i) => !i.done);
-                        return (
-                          <div key={l.id} className="glance-list" data-complete={items.length && !next.length ? '' : undefined}>
-                            <div className="glance-head">
-                              <span className="glance-name">{l.name}</span>
-                              <span className="glance-count" aria-label={`${done} of ${items.length} done`}>{done}/{items.length}</span>
-                            </div>
-                            {items.length > 0 && <span className="plist-bar" aria-hidden="true"><span style={{ width: `${(done / items.length) * 100}%` }} /></span>}
-                            {next.length ? (
-                              <ul className="glance-items">
-                                {next.slice(0, 3).map((i) => (
-                                  <li key={i.id}>
-                                    <button className="glance-item" onClick={() => tick(l, i.id)} aria-label={`Tick off ${i.text}`}>
-                                      <span className="glance-box" aria-hidden="true" />{i.text}
-                                    </button>
-                                  </li>
-                                ))}
-                                {next.length > 3 && (
-                                  <li><button className="glance-more" onClick={() => onOpenProject?.(p.id)} aria-label={`${next.length - 3} more in ${l.name}: open ${p.name}`}>+{next.length - 3} more</button></li>
-                                )}
-                              </ul>
-                            ) : (
-                              <p className="glance-empty">{items.length ? 'All ticked off' : 'Nothing on it yet'}</p>
-                            )}
-                          </div>
-                        );
-                      })}
+                      {g.lists.filter((l) => l.projectId === pid).map((l) => <GlanceList key={l.id} l={l} p={p} tick={tick} onOpenProject={onOpenProject} />)}
                     </div>
                   </li>
                 );

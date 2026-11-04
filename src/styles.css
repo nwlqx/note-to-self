@@ -2833,3 +2833,19 @@ p.project-area.area-tab { display: inline-flex; padding: 4px 12px; border-radius
 .pbudget-date { font-size: var(--text-xs); color: var(--ink-soft); }
 .pbudget-amt { font-variant-numeric: tabular-nums; }
 .pbudget-log { align-self: flex-start; min-height: var(--control-sm); margin-top: 4px; }
+
+/* ---------- checklists card (Home): third card beside Today and Due today on wide screens,
+   its own full-width row under them on phones and tablets ---------- */
+.tile-lists { grid-column: 1 / -1; max-height: 26rem; background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-strong); cursor: default; --hl: var(--lavender); }
+.tile-lists:hover { transform: none; }
+.tile-lists .tile-arrow { background: var(--surface-sunken); color: var(--ink); }
+.tile-lists .lists-body { display: flex; flex-direction: column; gap: var(--s3); flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; margin-right: -8px; padding-right: 8px; }
+.tile-lists .lists-proj-group { display: flex; flex-direction: column; gap: var(--s2); }
+.tile-lists .lists-proj-group + .lists-proj-group { border-top: 1px solid var(--line); padding-top: var(--s3); }
+.tile-lists .glance-list { width: auto; }
+.tile-lists .glance-list + .glance-list { margin: var(--s2) 0 0; padding: 0; border: 0; } /* stacked, not side by side, so no indent */
+.todo > .glance { display: none; } /* the card replaces the section */
+@media (min-width: 900px) {
+  .bento { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr); }
+  .tile-lists { grid-column: auto; max-height: none; contain: size; } /* as tall as Today and Due today */
+}

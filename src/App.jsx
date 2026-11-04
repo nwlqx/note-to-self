@@ -246,6 +246,7 @@ export default function App() {
             onNewTask={(defaults) => setSheet({ type: 'card', defaults })}
             entries={entries} onOpen={openEntry}
             onOpenProject={(id) => { setView({ name: 'project', id }); window.scrollTo(0, 0); }}
+            onOpenProjects={go('projects')}
             onOpenDay={(d) => { setDay(d); setCalMode('day'); setView({ name: 'calendar' }); window.scrollTo(0, 0); }}
             onOpenWeek={() => { setCalMode('week'); setWeekStart(startOfWeek(todayKey())); setView({ name: 'calendar' }); window.scrollTo(0, 0); }} />
         )}

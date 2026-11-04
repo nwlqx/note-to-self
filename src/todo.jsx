@@ -36,7 +36,7 @@ export function QuadPicker({ value, onPick, onClear, compact = false }) {
   );
 }
 
-export function TodoView({ hub, areas, areasById, projects, onOpenCard, onNewTask, entries = [], onOpen, onOpenProject, onOpenDay, onOpenWeek }) {
+export function TodoView({ hub, areas, areasById, projects, onOpenCard, onNewTask, entries = [], onOpen, onOpenProject, onOpenProjects, onOpenDay, onOpenWeek }) {
   const wide = useWide();
   const items = hub.data.items.items;
   const projectsById = useMemo(() => Object.fromEntries(projects.map((p) => [p.id, p])), [projects]);
@@ -186,7 +186,8 @@ export function TodoView({ hub, areas, areasById, projects, onOpenCard, onNewTas
     <section className="view todo" aria-label="Home">
       <Greeting name={hub.data.settings.name} />
       <Bento entries={entries} items={items} projects={projects} areasById={areasById}
-        onOpenDay={onOpenDay} onOpenWeek={onOpenWeek} onOpenProject={onOpenProject} />
+        onOpenDay={onOpenDay} onOpenWeek={onOpenWeek} onOpenProject={onOpenProject}
+        checklists={<ChecklistGlance card hub={hub} projects={projects} areas={areas} project={proj} hiddenAreas={hidden} onOpenProject={onOpenProject} onOpenProjects={onOpenProjects} />} />
 
       <ChecklistGlance hub={hub} projects={projects} areas={areas} project={proj} hiddenAreas={hidden} onOpenProject={onOpenProject} />
 
@@ -293,7 +294,7 @@ function Greeting({ name }) {
   );
 }
 
-function Bento({ entries, items, projects, areasById, onOpenDay, onOpenWeek, onOpenProject }) {
+function Bento({ entries, items, projects, areasById, onOpenDay, onOpenWeek, onOpenProject, checklists }) {
   const today = todayKey();
   const now = new Date();
   const todays = sortEntries(entries.filter((e) => e.kind === 'event' && e.date && covers(e, today)));
@@ -365,6 +366,7 @@ function Bento({ entries, items, projects, areasById, onOpenDay, onOpenWeek, onO
         </button>
       </div>
 
+      {checklists}
     </div>
   );
 }

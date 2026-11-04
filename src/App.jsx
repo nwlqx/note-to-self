@@ -241,6 +241,8 @@ export default function App() {
             onClick={() => setView(view.name === 'settings' ? { name: 'todo' } : { name: 'settings' })}><Icon name="settings" /></button>
         </div>
 
+        {view.name !== 'todo' && <button className="back-home" onClick={go('todo')}>&lt; Back to home</button>}
+
         {view.name === 'todo' && (
           <TodoView hub={hub} areas={activeAreas} areasById={areasById} projects={projects} onOpenCard={openCard}
             onNewTask={(defaults) => setSheet({ type: 'card', defaults })}

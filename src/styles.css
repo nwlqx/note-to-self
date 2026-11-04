@@ -2846,6 +2846,10 @@ p.project-area.area-tab { display: inline-flex; padding: 4px 12px; border-radius
 .tile-lists .glance-list + .glance-list { margin: var(--s2) 0 0; padding: 0; border: 0; } /* stacked, not side by side, so no indent */
 .todo > .glance { display: none; } /* the card replaces the section */
 @media (min-width: 900px) {
-  .bento { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr); }
+  .bento { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .tile-lists { grid-column: auto; max-height: none; contain: size; } /* as tall as Today and Due today */
 }
+
+/* "< Back to home" sits above the header of every page except Home */
+.back-home { display: block; margin: 0 0 var(--s2); padding: 4px 0; font-size: var(--text-xs); font-weight: 500; color: var(--ink-soft); }
+.back-home:hover { color: var(--ink); }

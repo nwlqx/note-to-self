@@ -289,47 +289,41 @@ export function MoneyPage({ hub, projects, areasById, onSheet, onOpenProject }) 
             onAll={() => onSheet({ type: 'category', catId: '', ym })}
             onPick={(c) => onSheet({ type: 'category', catId: c.id || 'none', ym })} />
         )}
-        {catTiles.length ? (
+        {/* every category in one list: budgeted ones first with their bar, the rest as plain totals */}
+        {catTiles.length > 0 && (
+          <ul className="m-tiles">
+            {[...catTiles.filter((r) => r.c.budget), ...catTiles.filter((r) => !r.c.budget)].map(({ c, spent: s }) => {
+              const over = c.budget && s > c.budget;
+              return (
+                <li key={c.id || 'none'} style={areaStyle(c.color ? { color: c.color } : null)}>
+                  <button className="m-tile" onClick={() => onSheet({ type: 'category', catId: c.id || 'none', ym })} aria-label={`${c.name}, ${money(s)} spent${c.budget ? ` of ${money(c.budget)}` : ''}. Show details`}>
+                    <span className="m-tile-name" title={c.name}><CatMark c={c} /><span className="m-tile-text">{c.name}</span></span>
+                    <span className="m-tile-num">{money(s, BASE, { compact: true })}{c.budget ? <span className="m-of"> / {money(c.budget, BASE, { compact: true })}</span> : null}</span>
+                    {c.budget ? <Bar spent={s} budget={c.budget} label="" /> : null}
+                    {c.budget ? <span className={`m-tile-left${over ? ' m-over' : ''}`}>{over ? `${money(s - c.budget, BASE, { compact: true })} over` : `${money(c.budget - s, BASE, { compact: true })} left`}</span> : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {catTiles.length > 0 && trips.length > 0 && (
           <>
-            {[catTiles.filter((r) => r.c.budget), catTiles.filter((r) => !r.c.budget)].map((list, gi) => (list.length > 0 || (gi === 1 && trips.length > 0)) && (
-              <React.Fragment key={gi}>
-                {gi === 1 && trips.length > 0 && (
-                  <>
-                    <h3 className="m-tiles-label">Projects</h3>
-                      <ul className="m-tiles">
-                        {trips.map(({ p, spent: s }) => (
-                          <li key={p.id} style={projectStyle(p, areasById[p.area])}>
-                            <button className="m-tile" onClick={() => onSheet({ type: 'spending', projectId: p.id })}>
-                              <span className="m-tile-name" title={p.name}><ProjectIcon project={p} size={15} /><span className="m-tile-text">{p.name}</span></span>
-                              <span className="m-tile-num">{money(s, BASE, { compact: true })}{p.budget ? <span className="m-of"> / {money(p.budget, BASE, { compact: true })}</span> : null}</span>
-                              {p.budget ? <Bar spent={s} budget={p.budget} label="" /> : null}
-                              <span className={`m-tile-left${p.budget && s > p.budget ? ' m-over' : ''}`}>{p.budget ? (s > p.budget ? `${money(s - p.budget, BASE, { compact: true })} over` : `${money(p.budget - s, BASE, { compact: true })} left`) : 'All time'}</span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                  </>
-                )}
-                {gi === 1 && list.length > 0 && catTiles.some((r) => r.c.budget) && <h3 className="m-tiles-label">Unbudgeted</h3>}
-                {list.length > 0 && <ul className="m-tiles">
-            {list.map(({ c, spent: s, count }) => {
-                  const over = c.budget && s > c.budget;
-                  return (
-                    <li key={c.id || 'none'} style={areaStyle(c.color ? { color: c.color } : null)}>
-                      <button className="m-tile" onClick={() => onSheet({ type: 'category', catId: c.id || 'none', ym })} aria-label={`${c.name}, ${money(s)} spent${c.budget ? ` of ${money(c.budget)}` : ''}. Show details`}>
-                        <span className="m-tile-name" title={c.name}><CatMark c={c} /><span className="m-tile-text">{c.name}</span></span>
-                        <span className="m-tile-num">{money(s, BASE, { compact: true })}{c.budget ? <span className="m-of"> / {money(c.budget, BASE, { compact: true })}</span> : null}</span>
-                        {c.budget ? <Bar spent={s} budget={c.budget} label="" /> : null}
-                        {c.budget ? <span className={`m-tile-left${over ? ' m-over' : ''}`}>{over ? `${money(s - c.budget, BASE, { compact: true })} over` : `${money(c.budget - s, BASE, { compact: true })} left`}</span> : null}
-                      </button>
-                    </li>
-                  );
-                })}
-                </ul>}
-              </React.Fragment>
-            ))}
+            <h3 className="m-tiles-label">Projects</h3>
+            <ul className="m-tiles">
+              {trips.map(({ p, spent: s }) => (
+                <li key={p.id} style={projectStyle(p, areasById[p.area])}>
+                  <button className="m-tile" onClick={() => onSheet({ type: 'spending', projectId: p.id })}>
+                    <span className="m-tile-name" title={p.name}><ProjectIcon project={p} size={15} /><span className="m-tile-text">{p.name}</span></span>
+                    <span className="m-tile-num">{money(s, BASE, { compact: true })}{p.budget ? <span className="m-of"> / {money(p.budget, BASE, { compact: true })}</span> : null}</span>
+                    {p.budget ? <Bar spent={s} budget={p.budget} label="" /> : null}
+                    <span className={`m-tile-left${p.budget && s > p.budget ? ' m-over' : ''}`}>{p.budget ? (s > p.budget ? `${money(s - p.budget, BASE, { compact: true })} over` : `${money(p.budget - s, BASE, { compact: true })} left`) : 'All time'}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           </>
-        ) : null}
+        )}
       </section>
       )}
 
